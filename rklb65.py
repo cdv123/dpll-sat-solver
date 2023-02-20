@@ -70,7 +70,6 @@ def branching_sat_solve(clause_set, partial_assignment):
     return False
 def unit_propogate(clause_set):
     assignments = []
-
     i = 0
     while i < len(clause_set):
         if len(clause_set[i]) == 1:
@@ -135,6 +134,28 @@ def unit_propogate2(clause_set):
             clause+=1
         i+=1
     return clause_set
+def unit_propogate3(clause_set):
+    units = []
+    clause = 0
+    while clause < len(clause_set):
+        if len(clause_set[clause]) == 1:
+            units.append(-1*clause_set[clause][0])
+            clause_set.remove(clause_set[clause])
+            clause = 0
+        else:
+            if len(clause_set[clause]) == 0:
+                return False
+            if set(units).intersection(set(clause_set[clause])) !={}:
+                for i in list(set(units).intersection(set(clause_set[clause]))):
+                    clause_set[clause].remove(i)
+                if len(clause_set[clause]) == 1:
+                    units.append(-1*clause_set[clause][0])
+                    clause_set.remove(clause_set[clause])
+                    clause = 0
+                elif len(clause_set[clause]) == 0:
+                    return False
+        clause+=1
+    return clause_set
 # def unit_propogate3(clause_set):
 #     clause = 0
 #     while clause<len(clause_set):
@@ -142,25 +163,17 @@ def unit_propogate2(clause_set):
 #             unit = clause_set.pop(clause_set[clause][0])
             
 #     return clause_set
-def find_variables(clause_set):
-    all_variables =[]
-    for i in clause_set:
-        for j in i:
-            if abs(j) not in all_variables:
-                all_variables.append(abs(j))
-    return all_variables
-def mostCommonVariables(clause_set, all_variables):
-    commonVariables = []
-    for i in all_variables:
-        commonVariables.append([i,0])
-        for clause in clause_set:
-            if i in clause or -1*i in clause:
-                commonVariables[-1][1]+=1
-    commonVariables = sorted(commonVariables, key = lambda x:x[1], reverse=True)
-    all_variables = []
-    for i in commonVariables:
-        all_variables.append(i[0])
-    return all_variables
+def find_variables(clause_set, all_variables = []):
+    clause_set2 = []
+    for clause in clause_set:
+        for literal in clause:
+            clause_set2.append(abs(literal))
+    most_common = np.unique(clause_set2)
+    # most_common, counts = np.unique(clause_set2,return_counts = True)
+    # pairs = [(most_common[i],counts[i]) for i in range(len(most_common))]
+    # pairs.sort(key=lambda x:x[0], reverse=True)
+    # all_variables = np.append(all_variables,most_common)
+    return most_common
 def set_var(clause_set,var):
     clause = 0
     while clause < len(clause_set):
@@ -178,95 +191,32 @@ def set_var2(clause_set,var):
     for clause in clause_set:
         if var not in clause:
             clause_set2.append(copy.copy(clause))
-    for clause in clause_set2:
-        while -1*var in clause:
-            clause.remove(-1*var)
+            if -1*var in clause_set2[-1]:
+                clause_set2[-1].remove(-1*var)
+                if clause ==[]:
+                    return False
+    return clause_set2
+def set_var3(clause_set,var):
+    clause_set2 = []
+    for clause in clause_set:
+        if var not in clause:
+            clause_set2.append([])
+            for literal in clause:
+                if literal !=-1*var:
+                    clause_set2[-1].append(literal)
+            if clause_set2[-1] == []:
+                return False
+    if clause_set2 == []:
+        return True
     return clause_set2
 # dpll ='''
-def dpll_sat_solve(clause_set, partial_assignment):
-    all_variables = find_variables(clause_set)
-    all_variables = mostCommonVariables(clause_set,all_variables)
-    dpll_sat_solve_wrapper(clause_set,partial_assignment,all_variables)
-    print(partial_assignment)
-# '''
-def dpll_sat_solve_wrapper(clause_set,partial_assignment,all_variables):
-    print(partial_assignment)
-    if is_valid(clause_set,partial_assignment,all_variables):
-        for clause in clause_set:
-            if clause == []:
-                return False
-        if check(clause_set,partial_assignment):
-            return partial_assignment
-        # unit_propogate(clause_set)
-        partial_assignment.append(all_variables[len(partial_assignment)])
-        clause_set2 = set_var2(clause_set,partial_assignment[-1])
-        if dpll_sat_solve_wrapper(clause_set2, partial_assignment) == False:
-            partial_assignment.pop()
-        else:
-            return partial_assignment
-        partial_assignment.append(all_variables[len(partial_assignment)]*-1)
-        clause_set2 = set_var2(clause_set,partial_assignment[-1])
-        if dpll_sat_solve_wrapper(clause_set, partial_assignment) == False:
-            partial_assignment.pop()
-        else:
-            return partial_assignment
-    return False
-def dpll_sat_solve2(clause_set, partial_assignment):
-    all_variables = find_variables(clause_set)
-    all_variables = mostCommonVariables(clause_set,all_variables)
-    dpll_sat_solve_wrapper2(clause_set,partial_assignment,all_variables)
-    print(partial_assignment)
-# '''
-def dpll_sat_solve_wrapper2(clause_set,partial_assignment,all_variables):
-    if is_valid(clause_set,partial_assignment,all_variables):
-        for clause in clause_set:
-            if clause == []:
-                return False
-        if check(clause_set,partial_assignment):
-            return partial_assignment
-        # unit_propogate(clause_set)
-        clause_set2 = copy.deepcopy(clause_set)
-        partial_assignment.append(all_variables[len(partial_assignment)])
-        clause_set = set_var(clause_set,partial_assignment[-1])
-        if dpll_sat_solve_wrapper2(clause_set2, partial_assignment,all_variables) == False:
-            partial_assignment.pop()
-            clause_set = clause_set2
-        else:
-            return partial_assignment
-        partial_assignment.append(all_variables[len(partial_assignment)]*-1)
-        clause_set = set_var(clause_set,partial_assignment[-1])
-        if dpll_sat_solve_wrapper2(clause_set, partial_assignment,all_variables) == False:
-            partial_assignment.pop()
-            clause_set = clause_set2
-        else:
-            return partial_assignment
-    return False
-def dpll_sat_solve3(clause_set, partial_assignment):
-    if is_valid(clause_set,partial_assignment,all_variables):
-        for clause in clause_set:
-            if clause == []:
-                return False
-        if check(clause_set,partial_assignment):
-            return partial_assignment
-        unit_propogate(clause_set)
-        clause_set2 = copy.deepcopy(clause_set)
-        partial_assignment.append(all_variables[len(partial_assignment)])
-        clause_set = set_var(clause_set,partial_assignment[-1])
-        if dpll_sat_solve3(clause_set, partial_assignment) == False:
-            partial_assignment.pop()
-            clause_set = clause_set2
-        else:
-            return partial_assignment
-        partial_assignment.append(all_variables[len(partial_assignment)]*-1)
-        clause_set = set_var(clause_set,partial_assignment[-1])
-        if dpll_sat_solve3(clause_set, partial_assignment) == False:
-            partial_assignment.pop()
-            clause_set = clause_set2
-        else:
-            return partial_assignment
-    return False
 
-def dpll_sat_solve4(clause_set, partial_assignment):
+
+def dpll_sat_solve4(clause_set,partial_assignment):
+    all_variables = find_variables(clause_set)
+    partial_assignment = dpll_sat_solve4_wrapper(clause_set,partial_assignment,all_variables)
+    return partial_assignment
+def dpll_sat_solve4_wrapper(clause_set, partial_assignment,all_variables):
     if is_valid(clause_set,partial_assignment,all_variables):
         for clause in clause_set:
             if clause == []:
@@ -276,37 +226,120 @@ def dpll_sat_solve4(clause_set, partial_assignment):
         unit_propogate(clause_set)
         partial_assignment.append(all_variables[len(partial_assignment)])
         clause_set2 = set_var2(clause_set,partial_assignment[-1])
-        if dpll_sat_solve4(clause_set2, partial_assignment) == False:
+        if not clause_set2 or dpll_sat_solve4_wrapper(clause_set2, partial_assignment,all_variables) == False:
             partial_assignment.pop()
         else:
             return partial_assignment
         partial_assignment.append(all_variables[len(partial_assignment)]*-1)
         clause_set2 = set_var2(clause_set,partial_assignment[-1])
-        if dpll_sat_solve4(clause_set2, partial_assignment) == False:
+        if not clause_set2 or dpll_sat_solve4_wrapper(clause_set2, partial_assignment,all_variables) == False:
             partial_assignment.pop()
         else:
             return partial_assignment
     return False
-
+def dpll_wiki(clause_set,partial_assignment):
+    all_variables = find_variables(clause_set)
+    partial_assignment = dpll_wiki_wrapper(clause_set,partial_assignment,all_variables)
+    return partial_assignment
+def dpll_wiki_wrapper(clause_set,partial_assignment,all_variables):
+    if clause_set ==[]:
+        return partial_assignment
+    if [] in clause_set:
+        return False
+    unit_propogate(clause_set)
+    partial_assignment.append(all_variables[len(partial_assignment)])
+    clause_set2 = set_var2(clause_set,partial_assignment[-1])
+    if clause_set2 == True:
+        return partial_assignment
+    if dpll_wiki_wrapper(clause_set2, partial_assignment,all_variables) == False:
+        partial_assignment.pop()
+    else:
+        return partial_assignment
+    partial_assignment.append(all_variables[len(partial_assignment)]*-1)
+    clause_set2 = set_var2(clause_set,partial_assignment[-1])
+    if clause_set2 == True:
+        return partial_assignment
+    if dpll_wiki_wrapper(clause_set2, partial_assignment,all_variables) == False:
+        partial_assignment.pop()
+    else:
+        return partial_assignment
+    return False
+def dpll_wiki2(clause_set,partial_assignment):
+    all_variables = find_variables(clause_set)
+    partial_assignment = dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables)
+    return partial_assignment
+def dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables):
+    unit_propogate2(clause_set)
+    if clause_set ==[]:
+        return partial_assignment
+    if [] in clause_set:
+        return False
+    
+    all_variables = find_variables(clause_set,all_variables)
+    var = 0
+    for i in all_variables:
+        if i not in partial_assignment:
+            var = i
+            break
+    partial_assignment.append(var)
+    clause_set2 = set_var3(clause_set,partial_assignment[-1])
+    if clause_set2 == True:
+        return partial_assignment
+    if clause_set2 == False or dpll_wiki_wrapper2(clause_set2, partial_assignment,all_variables) == False:
+        partial_assignment.pop()
+    else:
+        return partial_assignment
+    partial_assignment.append(var*-1)
+    clause_set2 = set_var3(clause_set,partial_assignment[-1])
+    if clause_set2 == True:
+        return partial_assignment
+    if clause_set2 == False or dpll_wiki_wrapper2(clause_set2, partial_assignment,all_variables) == False:
+        partial_assignment.pop()
+        return False
+    else:
+        return partial_assignment
+    
+def branch(clause_set,partial_assignment,all_variables):
+    var = all_variables[len(partial_assignment)]
+    clause_set2 = []
+    clause_set3 = []
+    for clause in clause_set:
+        if var not in clause:
+            clause_set2.append([])
+            for literal in clause:
+                if literal !=-1*var:
+                    clause_set2[-1].append(literal)
+        if -1*var not in clause:
+            clause_set3.append([])
+            for literal in clause:
+                if literal !=var:
+                    clause_set3[-1].append(literal)
+    if [] in clause_set2 and [] in clause_set3 :
+        return False
+    partial_assignment.append(var)
+    
+    if [] in clause_set2 or dpll_wiki_wrapper2(clause_set2,partial_assignment,all_variables) == False:
+        partial_assignment.pop()
+    else:
+        return partial_assignment
+    partial_assignment.append(-1*var)
+    if [] in clause_set3 or dpll_wiki_wrapper2(clause_set3,partial_assignment,all_variables) == False:
+        partial_assignment.pop()
+        return False
+    else:
+        return partial_assignment   
 clause_set = load_DIMACS("8queens.txt")
+print(dpll_wiki2(clause_set,[]))
+# print(timeit.repeat('dpll_wiki2(clause_set,[])', globals=globals(), number = 1 , repeat = 1)[0])
+# sum1 = 0
+# sum2 = 0
+# for i in range(100):
+#     clause_set = load_DIMACS("8queens.txt")
+#     sum1+=timeit.repeat('dpll_wiki(clause_set,[])', globals=globals(), number = 1 , repeat = 1)[0]
+#     clause_set = load_DIMACS("8queens.txt")
+#     sum2+=timeit.repeat('dpll_sat_solve4(clause_set,[])', globals=globals(), number = 1 , repeat = 1)[0]
+# print(sum1-sum2)
 
-# L = [28, 29, 36, 37, 19, 20, 21, 22, 27, 30, 35, 38, 43, 44, 45, 46]
-# for i in L:
-#     clause_set = set_var2(clause_set,i)
-# unit_propogate3(clause_set)
-# print(clause_set)
-all_variables = find_variables(clause_set)
-all_variables = mostCommonVariables(clause_set,all_variables)
-# print(set_var2(clause_set,1))
-# print(dpll_sat_solve4(clause_set,[]))
-# print(check(dpll_sat_solve4))
-# clause_set = set_var2(clause_set,2)
-# print(clause_set)
-print(timeit.repeat('dpll_sat_solve4(clause_set,[])', globals=globals(), number = 1 , repeat = 1))
-clause_set = load_DIMACS("8queens.txt")
-all_variables = find_variables(clause_set)
-all_variables = mostCommonVariables(clause_set,all_variables)
-print(timeit.repeat('dpll_sat_solve3(clause_set,[])', globals=globals(), number = 1 , repeat = 1))
 
 
 

@@ -136,4 +136,3 @@ def dpll_sat_solve_wrapper(clause_set, partial_assignment,all_variables):
             return partial_assignment
     return False
 clause_set = load_DIMACS("8queens.txt")
-print(dpll_sat_solve(clause_set,[]))
