@@ -68,7 +68,7 @@ def branching_sat_solve(clause_set, partial_assignment):
             return partial_assignment
             
     return False
-def unit_propogate(clause_set):
+def unit_propagate(clause_set):
     assignments = []
     i = 0
     while i < len(clause_set):
@@ -89,7 +89,7 @@ def unit_propogate(clause_set):
                 if clause != len(clause_set)-1:
                     clause-=1
             else:
-                if len(clause_set) > 3:
+                # if len(clause_set) > 3:
                     while assignments[i]*-1 in clause_set[clause]:
                         clause_set[clause].remove(assignments[i]*-1)
                         if len(clause_set[clause]) == 1:
@@ -100,11 +100,12 @@ def unit_propogate(clause_set):
                         
             clause+=1
         i+=1
+
     for i in assignments:
         clause_set.append([i])
     assignments = []
     return clause_set
-def unit_propogate2(clause_set):
+def unit_propagate2(clause_set):
     assignments = []
 
     i = 0
@@ -117,6 +118,8 @@ def unit_propogate2(clause_set):
     i = 0
     while i < len(assignments):
         clause = 0
+        # if assignments[i] and assignments[i]*-1 in assignments:
+        #     return [[]]
         while clause < len(clause_set):
             if assignments[i] in clause_set[clause]:
                 clause_set.remove(clause_set[clause])
@@ -124,28 +127,42 @@ def unit_propogate2(clause_set):
                     clause-=1
             else:
                 while assignments[i]*-1 in clause_set[clause]:
+
                     clause_set[clause].remove(assignments[i]*-1)
                     if len(clause_set[clause]) == 1:
                         assignments.append(clause_set[clause][0])
                         clause_set.remove(clause_set[clause])
-                        if clause != len(clause_set)-1:
+                        if clause == len(clause_set):
                             clause-=1
-                        
+                    if len(clause_set) == 0:
+                        break
+
+                    
             clause+=1
         i+=1
+    for i in assignments:
+        if i and -i in assignments:
+
+            return [[]]
     return clause_set
-def unit_propogate3(clause_set):
+def unit_propagate3(clause_set):
     units = []
+    units2 = []
     clause = 0
     while clause < len(clause_set):
+
         if len(clause_set[clause]) == 1:
             units.append(-1*clause_set[clause][0])
+            units2.append(clause_set[clause][0])
             clause_set.remove(clause_set[clause])
             clause = 0
         else:
             if len(clause_set[clause]) == 0:
                 return False
-            if set(units).intersection(set(clause_set[clause])) !={}:
+            if set(units2).intersection(set(clause_set[clause])) !=set():
+                clause_set.remove(clause_set[clause])
+                clause-=1
+            elif set(units).intersection(set(clause_set[clause])) !=set():
                 for i in list(set(units).intersection(set(clause_set[clause]))):
                     clause_set[clause].remove(i)
                 if len(clause_set[clause]) == 1:
@@ -223,7 +240,7 @@ def dpll_sat_solve4_wrapper(clause_set, partial_assignment,all_variables):
                 return False
         if check(clause_set,partial_assignment):
             return partial_assignment
-        unit_propogate(clause_set)
+        unit_propagate(clause_set)
         partial_assignment.append(all_variables[len(partial_assignment)])
         clause_set2 = set_var2(clause_set,partial_assignment[-1])
         if not clause_set2 or dpll_sat_solve4_wrapper(clause_set2, partial_assignment,all_variables) == False:
@@ -246,7 +263,7 @@ def dpll_wiki_wrapper(clause_set,partial_assignment,all_variables):
         return partial_assignment
     if [] in clause_set:
         return False
-    unit_propogate(clause_set)
+    unit_propagate(clause_set)
     partial_assignment.append(all_variables[len(partial_assignment)])
     clause_set2 = set_var2(clause_set,partial_assignment[-1])
     if clause_set2 == True:
@@ -265,16 +282,23 @@ def dpll_wiki_wrapper(clause_set,partial_assignment,all_variables):
         return partial_assignment
     return False
 def dpll_wiki2(clause_set,partial_assignment):
+    clause_set2 = copy.deepcopy(clause_set)
     all_variables = find_variables(clause_set)
-    partial_assignment = dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables)
+    partial_assignment = list(dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables))
+    for i in partial_assignment:
+        if i ==0:
+            partial_assignment.remove(i)
+        clause_set2 = set_var2(clause_set2,i)
     return partial_assignment
 def dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables):
-    unit_propogate2(clause_set)
+    
     if clause_set ==[]:
         return partial_assignment
     if [] in clause_set:
         return False
-    
+    clause_set = unit_propagate2(clause_set)
+    if [] in clause_set:
+        return False
     all_variables = find_variables(clause_set,all_variables)
     var = 0
     for i in all_variables:
@@ -298,7 +322,10 @@ def dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables):
         return False
     else:
         return partial_assignment
+def pure_literal_elimination(clause_set):
     
+    return
+
 def branch(clause_set,partial_assignment,all_variables):
     var = all_variables[len(partial_assignment)]
     clause_set2 = []
@@ -327,20 +354,20 @@ def branch(clause_set,partial_assignment,all_variables):
         partial_assignment.pop()
         return False
     else:
-        return partial_assignment   
-clause_set = load_DIMACS("8queens.txt")
+        return partial_assignment
+clause_set = load_DIMACS("1.cnf")
+# clause_set = set_var(clause_set,1)
+# clause_set = set_var(clause_set,11)
+# clause_set = set_var(clause_set,21)
+
+# clause_set = unit_propagate(clause_set)
+# L = [1, 2, -3, 4, 5, -6, -7, -8, -9, 14, 15, 20]
+# for i in L:
+#     clause_set = set_var2(clause_set,i)
+# unit_propagate(clause_set)
+# print(clause_set)
 print(dpll_wiki2(clause_set,[]))
-# print(timeit.repeat('dpll_wiki2(clause_set,[])', globals=globals(), number = 1 , repeat = 1)[0])
-# sum1 = 0
-# sum2 = 0
-# for i in range(100):
-#     clause_set = load_DIMACS("8queens.txt")
-#     sum1+=timeit.repeat('dpll_wiki(clause_set,[])', globals=globals(), number = 1 , repeat = 1)[0]
-#     clause_set = load_DIMACS("8queens.txt")
-#     sum2+=timeit.repeat('dpll_sat_solve4(clause_set,[])', globals=globals(), number = 1 , repeat = 1)[0]
-# print(sum1-sum2)
-
-
-
+# clause_set2 = copy.deepcopy(clause_set)
+# print(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1))
 
     
