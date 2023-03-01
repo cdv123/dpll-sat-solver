@@ -127,7 +127,6 @@ def unit_propagate2(clause_set):
                     clause-=1
             else:
                 while assignments[i]*-1 in clause_set[clause]:
-
                     clause_set[clause].remove(assignments[i]*-1)
                     if len(clause_set[clause]) == 1:
                         assignments.append(clause_set[clause][0])
@@ -159,7 +158,7 @@ def unit_propagate3(clause_set):
         else:
             if len(clause_set[clause]) == 0:
                 return False
-            if set(units2).intersection(set(clause_set[clause])) !=set():
+            if set(units2).isdisjoint(set(clause_set[clause])) == False:
                 clause_set.remove(clause_set[clause])
                 clause-=1
             elif set(units).intersection(set(clause_set[clause])) !=set():
@@ -282,21 +281,26 @@ def dpll_wiki_wrapper(clause_set,partial_assignment,all_variables):
         return partial_assignment
     return False
 def dpll_wiki2(clause_set,partial_assignment):
-    clause_set2 = copy.deepcopy(clause_set)
     all_variables = find_variables(clause_set)
-    partial_assignment = list(dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables))
-    for i in partial_assignment:
-        if i ==0:
-            partial_assignment.remove(i)
-        clause_set2 = set_var2(clause_set2,i)
+    # if partial_assignment == False:
+    #     return partial_assignment
+    partial_assignment = dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables)
+    if partial_assignment == False:
+        return False
+    # partial_assignment = list(partial_assignment)
+    # for i in partial_assignment:
+    #     set_var(clause_set,i)
+    #     if i ==0:
+    #         partial_assignment.remove(i)
+    # unit_propagate2(clause_set)
+    # print(clause_set)
     return partial_assignment
 def dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables):
-    
+    clause_set = unit_propagate2(clause_set)
     if clause_set ==[]:
         return partial_assignment
     if [] in clause_set:
         return False
-    clause_set = unit_propagate2(clause_set)
     if [] in clause_set:
         return False
     all_variables = find_variables(clause_set,all_variables)
@@ -322,9 +326,14 @@ def dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables):
         return False
     else:
         return partial_assignment
-def pure_literal_elimination(clause_set):
+# def pure_literal_elimination(clause_set):
     
-    return
+#     return
+def test(clause_set,L):
+    for i in L:
+        clause_set = set_var(clause_set,i)
+    unit_propagate2(clause_set)
+    return clause_set
 
 def branch(clause_set,partial_assignment,all_variables):
     var = all_variables[len(partial_assignment)]
@@ -355,19 +364,18 @@ def branch(clause_set,partial_assignment,all_variables):
         return False
     else:
         return partial_assignment
-clause_set = load_DIMACS("1.cnf")
+clause_set = load_DIMACS("LNP-6.txt")
 # clause_set = set_var(clause_set,1)
 # clause_set = set_var(clause_set,11)
 # clause_set = set_var(clause_set,21)
 
-# clause_set = unit_propagate(clause_set)
-# L = [1, 2, -3, 4, 5, -6, -7, -8, -9, 14, 15, 20]
-# for i in L:
-#     clause_set = set_var2(clause_set,i)
-# unit_propagate(clause_set)
-# print(clause_set)
+
+# L = [1, -11, -12, 13, -18, -23,-26]
+
+# print(test(clause_set,L))
 print(dpll_wiki2(clause_set,[]))
-# clause_set2 = copy.deepcopy(clause_set)
-# print(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1))
+
+
+print(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1))
 
     
