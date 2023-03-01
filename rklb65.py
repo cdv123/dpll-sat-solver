@@ -1,6 +1,7 @@
 import numpy as np
 import copy
 import itertools
+import collections
 import timeit
 def load_DIMACS(file_name):
     example = open(file_name, "r")
@@ -104,6 +105,62 @@ def unit_propagate(clause_set):
         clause_set.append([i])
     assignments = []
     return clause_set
+def unit_propagate2(clause_set,units = set(), units2 = set()):
+    extra = False
+    for clause in clause_set:
+        if len(clause) == 1:
+            units.add(-1*clause[0])
+            units2.add(clause[0])
+            extra = True
+    clause = 0
+    while clause < len(clause_set):
+        if len(clause_set[clause]) == 0:
+            return False
+        if not units2.isdisjoint(set(clause_set[clause])):
+            clause_set.remove(clause_set[clause])
+            clause-=1
+        elif not units.isdisjoint(set(clause_set[clause])):
+            for i in list(units.intersection(set(clause_set[clause]))):
+                clause_set[clause].remove(i)
+            if len(clause_set[clause]) == 0:
+                print("b")
+                return False
+        clause+=1
+    if units != set() and not units.isdisjoint(units2) == False:
+        return False
+    if extra == False:
+        return clause_set
+    return unit_propagate2(clause_set,units,units2)
+def unit_propagate4(clause_set, units =set(), units2 = set()):
+    clause = 0
+    extra = False
+    while clause< len(clause_set):
+        if len(clause_set[clause]) == 1:
+            units2.add(clause_set[clause][0])
+            units.add(-1*clause_set[clause][0])
+            extra = True
+        elif len(clause_set[clause]) == 0:
+            return False
+        elif not units2.isdisjoint(set(clause_set[clause])):
+            clause_set.remove(clause_set[clause])
+            clause-=1
+        elif not units.isdisjoint(set(clause_set[clause])):
+            for i in list(units.intersection(set(clause_set[clause]))):
+                clause_set[clause].remove(i)
+            if len(clause_set[clause]) == 0:
+                return False
+            if len(clause_set[clause]) == 1:
+                units.add(-1*clause_set[clause][0])
+                units2.add(clause_set[clause][0])
+                extra = True
+                clause_set.remove(clause_set[clause])
+                clause-= -1
+        clause+=1
+    if units != set() and not units.isdisjoint(units2) == False:
+        return False
+    if extra == False:
+        return clause_set
+    return unit_propagate4(clause_set,units,units2)
 def unit_propagate3(clause_set):
     units = set()
     units2 = set()
@@ -137,11 +194,8 @@ def unit_propagate3(clause_set):
         clause+=1
     return clause_set
 def next_var(clause_set):
-    # clause_set2 = list(itertools.chain.from_iterable(clause_set))
-    clause_set2 = np.concatenate(clause_set).ravel()
-    most_common, counts = np.unique(clause_set2,return_counts = True)
-    most_common = [x for _,x in sorted(zip(counts,most_common), reverse=True)]
-    return most_common[0]
+    clause_set2 = list(itertools.chain.from_iterable(clause_set))
+    return collections.Counter(clause_set2).most_common(1)[0][0]
 def set_var(clause_set,var):
     clause = 0
     while clause < len(clause_set):
@@ -179,35 +233,9 @@ def set_var3(clause_set,var):
     if clause_set2 == []:
         return True
     return clause_set2
-
-
-def dpll_sat_solve4(clause_set,partial_assignment):
-    all_variables = find_variables(clause_set)
-    partial_assignment = dpll_sat_solve4_wrapper(clause_set,partial_assignment,all_variables)
-    return partial_assignment
-def dpll_sat_solve4_wrapper(clause_set, partial_assignment,all_variables):
-    if is_valid(clause_set,partial_assignment,all_variables):
-        for clause in clause_set:
-            if clause == []:
-                return False
-        if check(clause_set,partial_assignment):
-            return partial_assignment
-        unit_propagate(clause_set)
-        partial_assignment.append(all_variables[len(partial_assignment)])
-        clause_set2 = set_var2(clause_set,partial_assignment[-1])
-        if not clause_set2 or dpll_sat_solve4_wrapper(clause_set2, partial_assignment,all_variables) == False:
-            partial_assignment.pop()
-        else:
-            return partial_assignment
-        partial_assignment.append(all_variables[len(partial_assignment)]*-1)
-        clause_set2 = set_var2(clause_set,partial_assignment[-1])
-        if not clause_set2 or dpll_sat_solve4_wrapper(clause_set2, partial_assignment,all_variables) == False:
-            partial_assignment.pop()
-        else:
-            return partial_assignment
-    return False
 def dpll_wiki2(clause_set,partial_assignment):
-    clause_set = unit_propagate3(clause_set)
+    # print(partial_assignment)
+    clause_set = unit_propagate4(clause_set)
     if clause_set ==[]:
         return partial_assignment
     if not clause_set:
@@ -264,9 +292,10 @@ def test(clause_set,L):
             return False
     return True
 clause_set = load_DIMACS("8queens.txt")
-# L = [-28, -29, -36, -19, -30, -45, -34, -11, -22, -44, -55, -7, -53, -9, -24, -42, -3, -37, -57, -14, -20, -40, -26, -59, -39, -54, -1, -43, -56, -58, -13, -23, -25, -60, -6, -48, -10, -5, -31, -35, 50, -38]
+# L = [-28, -37, -29, -43, -18, -38, -12, -46, -27, -23, -49, -8, -35, -13, -55, -44, -2, -57, -24, -54, -39, -10, -59, -4, -33, -21, -30, -61, -56, -41, -26, 15, -60, -17, -48, -5, 51, -31, -34, -14]
+# print(clause_set)
 # print(test(clause_set,L))
-# print(dpll_wiki2(clause_set,[]))
-print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 100)))
+print(dpll_wiki2(clause_set,[]))
+# print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1)))
 
     
