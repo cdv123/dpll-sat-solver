@@ -145,49 +145,44 @@ def unit_propagate2(clause_set):
             return [[]]
     return clause_set
 def unit_propagate3(clause_set):
-    units = []
-    units2 = []
+    units = set()
+    units2 = set()
     clause = 0
     while clause < len(clause_set):
-
         if len(clause_set[clause]) == 1:
-            units.append(-1*clause_set[clause][0])
-            units2.append(clause_set[clause][0])
+            if not set(clause_set[clause]).isdisjoint(set(units)):
+                return False
+            units.add(-1*clause_set[clause][0])
+            units2.add(clause_set[clause][0])
             clause_set.remove(clause_set[clause])
-            clause = 0
+            clause = -1
         else:
             if len(clause_set[clause]) == 0:
                 return False
-            if set(units2).isdisjoint(set(clause_set[clause])) == False:
+            if not units2.isdisjoint(set(clause_set[clause])):
                 clause_set.remove(clause_set[clause])
                 clause-=1
-            elif set(units).intersection(set(clause_set[clause])) !=set():
-                for i in list(set(units).intersection(set(clause_set[clause]))):
+            elif not units.isdisjoint(set(clause_set[clause])):
+                for i in list(units.intersection(set(clause_set[clause]))):
                     clause_set[clause].remove(i)
                 if len(clause_set[clause]) == 1:
-                    units.append(-1*clause_set[clause][0])
+                    if not set(clause_set[clause]).isdisjoint(units):
+                        return False
+                    units.add(-1*clause_set[clause][0])
+                    units2.add(clause_set[clause][0])
                     clause_set.remove(clause_set[clause])
-                    clause = 0
+                    clause = -1
                 elif len(clause_set[clause]) == 0:
                     return False
         clause+=1
     return clause_set
-# def unit_propogate3(clause_set):
-#     clause = 0
-#     while clause<len(clause_set):
-#         if len(clause_set[clause]) == 1:
-#             unit = clause_set.pop(clause_set[clause][0])
-            
-#     return clause_set
-def find_variables(clause_set, all_variables = []):
-    clause_set2 = []
-    for clause in clause_set:
-        for literal in clause:
-            clause_set2.append(abs(literal))
-    most_common = np.unique(clause_set2)
-    # most_common, counts = np.unique(clause_set2,return_counts = True)
-    # pairs = [(most_common[i],counts[i]) for i in range(len(most_common))]
-    # pairs.sort(key=lambda x:x[0], reverse=True)
+def find_variables(clause_set):
+    clause_set2 = np.concatenate(clause_set).ravel().tolist()
+    for i in clause_set2:
+        i = abs(i)
+    # most_common = np.unique(clause_set2)
+    most_common, counts = np.unique(clause_set2,return_counts = True)
+    most_common = [x for _,x in sorted(zip(counts,most_common), reverse=True)]
     # all_variables = np.append(all_variables,most_common)
     return most_common
 def set_var(clause_set,var):
@@ -205,9 +200,9 @@ def set_var(clause_set,var):
 def set_var2(clause_set,var):
     clause_set2 = []
     for clause in clause_set:
-        if var not in clause:
+        if not set([var]).isdisjoint(set(clause)):
             clause_set2.append(copy.copy(clause))
-            if -1*var in clause_set2[-1]:
+            if not set([-1*var]).isdisjoint(set(clause_set2[-1])):
                 clause_set2[-1].remove(-1*var)
                 if clause ==[]:
                     return False
@@ -225,7 +220,6 @@ def set_var3(clause_set,var):
     if clause_set2 == []:
         return True
     return clause_set2
-# dpll ='''
 
 
 def dpll_sat_solve4(clause_set,partial_assignment):
@@ -253,57 +247,23 @@ def dpll_sat_solve4_wrapper(clause_set, partial_assignment,all_variables):
         else:
             return partial_assignment
     return False
-def dpll_wiki(clause_set,partial_assignment):
-    all_variables = find_variables(clause_set)
-    partial_assignment = dpll_wiki_wrapper(clause_set,partial_assignment,all_variables)
-    return partial_assignment
-def dpll_wiki_wrapper(clause_set,partial_assignment,all_variables):
-    if clause_set ==[]:
-        return partial_assignment
-    if [] in clause_set:
-        return False
-    unit_propagate(clause_set)
-    partial_assignment.append(all_variables[len(partial_assignment)])
-    clause_set2 = set_var2(clause_set,partial_assignment[-1])
-    if clause_set2 == True:
-        return partial_assignment
-    if dpll_wiki_wrapper(clause_set2, partial_assignment,all_variables) == False:
-        partial_assignment.pop()
-    else:
-        return partial_assignment
-    partial_assignment.append(all_variables[len(partial_assignment)]*-1)
-    clause_set2 = set_var2(clause_set,partial_assignment[-1])
-    if clause_set2 == True:
-        return partial_assignment
-    if dpll_wiki_wrapper(clause_set2, partial_assignment,all_variables) == False:
-        partial_assignment.pop()
-    else:
-        return partial_assignment
-    return False
 def dpll_wiki2(clause_set,partial_assignment):
     all_variables = find_variables(clause_set)
-    # if partial_assignment == False:
-    #     return partial_assignment
     partial_assignment = dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables)
     if partial_assignment == False:
         return False
-    # partial_assignment = list(partial_assignment)
-    # for i in partial_assignment:
-    #     set_var(clause_set,i)
-    #     if i ==0:
-    #         partial_assignment.remove(i)
-    # unit_propagate2(clause_set)
-    # print(clause_set)
     return partial_assignment
 def dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables):
-    clause_set = unit_propagate2(clause_set)
+    clause_set = unit_propagate3(clause_set)
     if clause_set ==[]:
         return partial_assignment
-    if [] in clause_set:
+    if not clause_set:
         return False
-    if [] in clause_set:
-        return False
-    all_variables = find_variables(clause_set,all_variables)
+    # clause_set= pure_literal_elimination(clause_set)
+    # partial_assignment += more_assignments
+    if clause_set ==[]:
+        return partial_assignment
+    all_variables = find_variables(clause_set)
     var = 0
     for i in all_variables:
         if i not in partial_assignment:
@@ -326,14 +286,37 @@ def dpll_wiki_wrapper2(clause_set,partial_assignment,all_variables):
         return False
     else:
         return partial_assignment
-# def pure_literal_elimination(clause_set):
-    
-#     return
+def pure_literal_elimination(clause_set):
+    flat_clause_set = [item for sublist in clause_set for item in sublist]
+    all_literals = list(np.unique(flat_clause_set))
+    set_literals = set(all_literals)
+    pure_literals = set()
+    for i in all_literals:
+        if set_literals.isdisjoint(set([-1*i])):
+            pure_literals.add(i)
+            # partial_asignment2.append(i)
+    if pure_literals == set():
+        return clause_set
+    clause = 0
+    while clause < len(clause_set):
+        if not set(clause_set[clause]).isdisjoint(pure_literals):
+            clause_set.remove(clause_set[clause])
+            clause-=1
+        clause+=1
+    return pure_literal_elimination(clause_set)
 def test(clause_set,L):
     for i in L:
         clause_set = set_var(clause_set,i)
-    unit_propagate2(clause_set)
-    return clause_set
+    unit_propagate(clause_set)
+    assignments = []
+    for i in clause_set:
+        assignments.append(i[0])
+    for i in clause_set:
+        if len(i) != 1:
+            return False
+        if -i[0] in assignments:
+            return False
+    return True
 
 def branch(clause_set,partial_assignment,all_variables):
     var = all_variables[len(partial_assignment)]
@@ -365,17 +348,9 @@ def branch(clause_set,partial_assignment,all_variables):
     else:
         return partial_assignment
 clause_set = load_DIMACS("LNP-6.txt")
-# clause_set = set_var(clause_set,1)
-# clause_set = set_var(clause_set,11)
-# clause_set = set_var(clause_set,21)
-
-
-# L = [1, -11, -12, 13, -18, -23,-26]
-
+# L = [-28, -29, -36, -19, -30, -45, -34, -11, -22, -44, -55, -7, -53, -9, -24, -42, -3, -37, -57, -14, -20, -40, -26, -59, -39, -54, -1, -43, -56, -58, -13, -23, -25, -60, -6, -48, -10, -5, -31, -35, 50, -38]
 # print(test(clause_set,L))
-print(dpll_wiki2(clause_set,[]))
-
-
+# print(dpll_wiki2(clause_set,[]))
 print(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1))
 
     
