@@ -324,11 +324,11 @@ def test(clause_set,L):
         if -i[0] in assignments:
             return False
     return True
-clause_set = load_dimacs("8queens.txt")
+clause_set = load_dimacs("gt.txt")
 L = [-28, -37, -29, -43, -18, -38, -12, -46, -27, -23, -49, -8, -35, -13, -55, -44, -2, -57, -24, -54, -39, -10, -59, -4, -33, -21, -30, -61, -56, -41, -26, -15, -60, -7, -45, -22, -64, -11, -34, -17, -51, -32, -1, -48, -14, 36, -42]
 # print(clause_set)
 # print(test(clause_set,L))
 # print(dpll_wiki2(clause_set,[]))
-# print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1)))
+print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1)))
 
     
