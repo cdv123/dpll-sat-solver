@@ -3,20 +3,19 @@ import copy
 import itertools
 import collections
 import timeit
-def load_DIMACS(file_name):
+def load_dimacs(file_name):
     example = open(file_name, "r")
     lines = example.readlines()
-    clause_size=int(lines[0].split()[-1])
-    maximum = int(lines[0].split()[-2])
     clause_set = []
-    for i in range(0,clause_size):
-        clause_set.append([])
-    count = 1
-    for i in range(1,len(lines)):
+    count = 0
+    for i in range(0,len(lines)):
         temp = lines[i].split()
-        if temp[0] == "c":
+        if temp[0] == "p":
+            count+=1
+        elif temp[0] == "c":
             count+=1
         else:
+            clause_set.append([])
             for j in range(0, len(temp)-1):
                 clause_set[i-count].append(int(temp[j]))
     return clause_set
@@ -167,32 +166,64 @@ def unit_propagate3(clause_set):
     clause = 0
     while clause < len(clause_set):
         if len(clause_set[clause]) == 1:
-            if not set(clause_set[clause]).isdisjoint(set(units)):
-                return False
             units.add(-1*clause_set[clause][0])
             units2.add(clause_set[clause][0])
             clause_set.remove(clause_set[clause])
             clause = -1
         else:
-            if len(clause_set[clause]) == 0:
+            if not clause_set[clause]:
                 return False
-            if not units2.isdisjoint(set(clause_set[clause])):
+            if not units2.isdisjoint(clause_set[clause]):
                 clause_set.remove(clause_set[clause])
-                clause-=1
-            elif not units.isdisjoint(set(clause_set[clause])):
-                for i in list(units.intersection(set(clause_set[clause]))):
+                continue
+            elif not units.isdisjoint(clause_set[clause]):
+                for i in units.intersection(clause_set[clause]):
                     clause_set[clause].remove(i)
                 if len(clause_set[clause]) == 1:
-                    if not set(clause_set[clause]).isdisjoint(units):
+                    if not units.isdisjoint(clause_set[clause]):
                         return False
                     units.add(-1*clause_set[clause][0])
                     units2.add(clause_set[clause][0])
                     clause_set.remove(clause_set[clause])
                     clause = -1
-                elif len(clause_set[clause]) == 0:
+                elif not clause_set[clause]:
                     return False
         clause+=1
     return clause_set
+def unit_propagate5(clause_set):
+    units = []
+    units2 = []
+    clause = 0
+    while clause < len(clause_set):
+        if len(clause_set[clause]) == 1:
+            if clause_set[clause][0] in units:
+                return False
+            units.append(-1*clause_set[clause][0])
+            units2.append(clause_set[clause][0])
+            clause_set.remove(clause_set[clause])
+            clause = -1
+        else:
+            if len(clause_set[clause]) == 0:
+                return False
+            for i in units2:
+                if i in clause_set[clause]:
+                    clause_set.remove(clause_set[clause])
+                    continue
+            for i in units:
+                while -i in clause_set[clause]: 
+                    clause_set[clause].remove(-i)
+            if len(clause_set[clause]) == 1:
+                if not set(clause_set[clause]).isdisjoint(units):
+                    return False
+                units.add(-1*clause_set[clause][0])
+                units2.add(clause_set[clause][0])
+                clause_set.remove(clause_set[clause])
+                clause = -1
+            elif len(clause_set[clause]) == 0:
+                return False
+        clause+=1
+    return clause_set
+
 def next_var(clause_set):
     clause_set2 = list(itertools.chain.from_iterable(clause_set))
     return collections.Counter(clause_set2).most_common(1)[0][0]
@@ -228,14 +259,14 @@ def set_var3(clause_set,var):
             for literal in clause:
                 if literal !=-1*var:
                     clause_set2[-1].append(literal)
-            if clause_set2[-1] == []:
+            if not clause_set2[-1]:
                 return False
-    if clause_set2 == []:
+    if not clause_set2:
         return True
     return clause_set2
 def dpll_wiki2(clause_set,partial_assignment):
     # print(partial_assignment)
-    clause_set = unit_propagate4(clause_set)
+    clause_set = unit_propagate3(clause_set)
     if clause_set ==[]:
         return partial_assignment
     if not clause_set:
@@ -258,15 +289,17 @@ def dpll_wiki2(clause_set,partial_assignment):
     if clause_set2 == False or dpll_wiki2(clause_set2, partial_assignment) == False:
         partial_assignment.pop()
         return False
-    else:
-        return partial_assignment
+    return partial_assignment
 def pure_literal_elimination(clause_set):
     flat_clause_set = [item for sublist in clause_set for item in sublist]
+    clause_set2 = list(itertools.chain.from_iterable(clause_set))
+    counters = collections.Counter(clause_set2)
+    print(counters)
     all_literals = list(np.unique(flat_clause_set))
     set_literals = set(all_literals)
     pure_literals = set()
     for i in all_literals:
-        if set_literals.isdisjoint(set([-1*i])):
+        if set_literals.isdisjoint([-1*i]):
             pure_literals.add(i)
             # partial_asignment2.append(i)
     if pure_literals == set():
@@ -291,11 +324,11 @@ def test(clause_set,L):
         if -i[0] in assignments:
             return False
     return True
-clause_set = load_DIMACS("8queens.txt")
-# L = [-28, -37, -29, -43, -18, -38, -12, -46, -27, -23, -49, -8, -35, -13, -55, -44, -2, -57, -24, -54, -39, -10, -59, -4, -33, -21, -30, -61, -56, -41, -26, 15, -60, -17, -48, -5, 51, -31, -34, -14]
+clause_set = load_dimacs("8queens.txt")
+L = [-28, -37, -29, -43, -18, -38, -12, -46, -27, -23, -49, -8, -35, -13, -55, -44, -2, -57, -24, -54, -39, -10, -59, -4, -33, -21, -30, -61, -56, -41, -26, -15, -60, -7, -45, -22, -64, -11, -34, -17, -51, -32, -1, -48, -14, 36, -42]
 # print(clause_set)
 # print(test(clause_set,L))
-print(dpll_wiki2(clause_set,[]))
+# print(dpll_wiki2(clause_set,[]))
 # print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1)))
 
     
