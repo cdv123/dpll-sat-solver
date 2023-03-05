@@ -307,16 +307,17 @@ def pure_literal_elimination(clause_set):
 def test(clause_set,L):
     for i in L:
         clause_set = set_var(clause_set,i)
-    unit_propagate(clause_set)
-    assignments = []
-    for i in clause_set:
-        assignments.append(i[0])
-    for i in clause_set:
-        if len(i) != 1:
-            return False
-        if -i[0] in assignments:
-            return False
-    return True
+    # unit_propagate(clause_set)
+    print(clause_set)
+    # assignments = []
+    # for i in clause_set:
+    #     assignments.append(i[0])
+    # for i in clause_set:
+    #     if len(i) != 1:
+    #         return False
+    #     if -i[0] in assignments:
+    #         return False
+    # return True
 
 def branch(clause_set,partial_assignment,all_variables):
     var = all_variables[len(partial_assignment)]
@@ -347,9 +348,10 @@ def branch(clause_set,partial_assignment,all_variables):
         return False
     else:
         return partial_assignment
-clause_set = load_DIMACS("LNP-6.txt")
-# L = [-28, -29, -36, -19, -30, -45, -34, -11, -22, -44, -55, -7, -53, -9, -24, -42, -3, -37, -57, -14, -20, -40, -26, -59, -39, -54, -1, -43, -56, -58, -13, -23, -25, -60, -6, -48, -10, -5, -31, -35, 50, -38]
-# print(test(clause_set,L))
+clause_set = load_DIMACS("W_2,3_ n=8.txt")
+L = [1, 2, 4, 5, 8, 11, 14, 15, -16, -13, -12, -10, -9, -7, -6, -3]
+
+print(test(clause_set,L))
 # print(dpll_wiki2(clause_set,[]))
 print(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1))
 
