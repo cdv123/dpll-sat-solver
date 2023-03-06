@@ -24,28 +24,32 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     watch_literals = {}
     #get all unique variables (first flatten list of lists)
     vars = list(itertools.chain.from_iterable(clause_set))
-    vars3 = np.unique(vars)
     vars = [var[0] for var in collections.Counter(vars).most_common()]
     vars2 = []
     for i in vars:
         if -i not in vars2:
             vars2.append(i)
-    literals = list(np.unique(np.abs(vars)))
+    literals = list(np.abs(vars))
     partial_assignment = {}
     units = []
     #intialise partial assignments as a dictionary, 0 is unassigned, 1 is set to true, -1, is set to false
     partial_assignment = dict.fromkeys(literals,0)
     #initialise dictionary of watched literals, key = literal, value = clauses being watched
-    for i in vars3:
-        watch_literals[i] = []
-    watch_literals = {key: [] for key in vars3}
-    for i in range(len(clause_set)):
-        #if length of clause is 1, append to units
-        if len(clause_set[i]) == 1:
-            units.append(clause_set[i][0])
-        else:
+    watch_literals = {key: [] for key in vars}
+    units = [i[0] for  i in clause_set if len(i) == 1]
+    if units == []:
+        for i in range(len(clause_set)):
             watch_literals[clause_set[i][0]].append(clause_set[i])
             watch_literals[clause_set[i][1]].append(clause_set[i])
+    else:
+        for i in range(len(clause_set)):
+            if len(clause_set[i]) == 1:
+                units.append(clause_set[i][0])
+            else:
+                watch_literals[clause_set[i][0]].append(clause_set[i])
+                watch_literals[clause_set[i][1]].append(clause_set[i])
+    # try using dict comprehension
+    # watch_literals = {key: [clause_set[i][0],clause_set[i][1]] for key in vars}
     #wrapper function needed as only initialise watched literals once
     partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2)
     #obtain list of assignments from dictionary of assignments
