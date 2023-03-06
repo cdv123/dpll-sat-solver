@@ -3,23 +3,23 @@ import copy
 import itertools
 import re
 import timeit
-def load_DIMACS(file_name):
+def load_dimacs(file_name):
     example = open(file_name, "r")
     lines = example.readlines()
-    clause_size=int(lines[0].split()[-1])
-    maximum = int(lines[0].split()[-2])
     clause_set = []
-    for i in range(0,clause_size):
-        clause_set.append([])
-    count = 1
-    for i in range(1,len(lines)):
+    count = 0
+    for i in range(0,len(lines)):
         temp = lines[i].split()
-        if temp[0] == "c":
+        if temp[0] == "p":
+            count+=1
+        elif temp[0] == "c":
             count+=1
         else:
+            clause_set.append([])
             for j in range(0, len(temp)-1):
                 clause_set[i-count].append(int(temp[j]))
     return clause_set
+
 def check(clause_set, truth_assignment):
     for clause in clause_set:
         for literal in clause:
@@ -306,7 +306,9 @@ def pure_literal_elimination(clause_set):
     return pure_literal_elimination(clause_set)
 def test(clause_set,L):
     for i in L:
-        clause_set = set_var(clause_set,i)
+        clause_set = set_var3(clause_set,i)
+        if clause_set == True or clause_set == False:
+            break
     # unit_propagate(clause_set)
     print(clause_set)
     # assignments = []
@@ -348,11 +350,10 @@ def branch(clause_set,partial_assignment,all_variables):
         return False
     else:
         return partial_assignment
-clause_set = load_DIMACS("W_2,3_ n=8.txt")
-L = [1, 2, 4, 5, 8, 11, 14, 15, -16, -13, -12, -10, -9, -7, -6, -3]
-
+clause_set = load_dimacs("8queens.txt")
+L = [1, 11, 21, 26, 44, -64, -61, -59, -57, -56, -55, -53, -51, -49, -48, -47, -46, -45, -43, -42, -41, -39, -38, -37, -35, -34, -33, -32, -31, -30, -29, -28, -27, -25, -24, -23, -22, -20, -19, -18, -17, -16, -15, -14, -13, -12, -10, -9, -8, -7, -6, -5, -4, -3, -2]
 print(test(clause_set,L))
-# print(dpll_wiki2(clause_set,[]))
-print(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1))
+# print(branching_sat_solve(clause_set,[]))
+# print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =10, repeat = 1))/10)
 
     

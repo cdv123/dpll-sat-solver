@@ -89,7 +89,7 @@ def unit_propagate(partial_assignment,units,watch_literals):
             return partial_assignment,False,watch_literals
         units.pop()
     return partial_assignment,units,watch_literals
-def set_var2(partial_assignment,watch_literals,var,units):
+def set_var(partial_assignment,watch_literals,var,units):
     #if variable has already been assigned, return False as it shows it is trying to be assigned to a different value => need to backtrack
     #and partial_assignment[abs(var)]*var != var
     if partial_assignment[abs(var)] != 0 and partial_assignment[abs(var)]*abs(var) != var:
@@ -141,25 +141,59 @@ def set_var2(partial_assignment,watch_literals,var,units):
         return partial_assignment,units,watch_literals
     #go through watched clauses and try to assign to a new watched literal to the clause
     for clause in watch_literals[-var]:
-        potential_unit = 0
-        for literal in clause:
-            if partial_assignment[abs(literal)]*abs(literal) == literal:
-                break
-            isIn = clause in watch_literals[literal]
-            if isIn and literal != var:
-                potential_unit = literal
-            if literal != -var and partial_assignment[abs(literal)] == 0 and isIn == False:
-                watch_literals[literal].append(clause)
-                watch_literals[-var].remove(clause)
-                break
-            if literal == clause[-1]:
-                if partial_assignment[abs(potential_unit)] == 0:
-                    partial_assignment[abs(potential_unit)] = int((potential_unit)/abs(potential_unit))
-                    units.append(potential_unit)
-                elif partial_assignment[abs(potential_unit)]*abs(potential_unit) != potential_unit:
+        unassigned_literals = [i for i in clause if partial_assignment[abs(i)]==0]
+        if len(unassigned_literals) == 0:
+            for i in clause:
+                if partial_assignment[abs(i)]*abs(i) == i:
+                    break
+                if i == clause[-1]:
                     return partial_assignment,False,watch_literals
-    return partial_assignment,units,watch_literals
+        else:
+            not_watches_clause = [i for i in unassigned_literals if clause not in watch_literals[i]]
+            watches_clause = [i for i in clause if clause in watch_literals[i] and i != -var]
+            if len(unassigned_literals) == 1:
+                if unassigned_literals[0] not in watches_clause:
+                    watch_literals[unassigned_literals[0]].append(clause)
+                    watch_literals[-var].remove(clause)
+                    units.append(unassigned_literals[0])
+                    partial_assignment[unassigned_literals[0]] = int(unassigned_literals[0]/abs(unassigned_literals[0]))
+                elif partial_assignment[abs(watches_clause[0])]*abs(watches_clause[0]) != watches_clause[0] and partial_assignment[abs(watches_clause[0])] !=0:
+                    return partial_assignment,False,watch_literals
+                else:
+                    units.append(unassigned_literals[0])
+                    partial_assignment[abs(unassigned_literals[0])] = int(unassigned_literals[0]/abs(unassigned_literals[0]))
+            else:
+                if partial_assignment[abs(watches_clause[0])]*abs(watches_clause[0]) != watches_clause[0] and partial_assignment[abs(watches_clause[0])] !=0:
+                    watch_literals[unassigned_literals[0]].append(clause)
+                    watch_literals[watches_clause[0]].remove(clause)
+                    watch_literals[unassigned_literals[1]].append(clause)
+                    watch_literals[-var].remove(clause)
+                else:
+                    watch_literals[not_watches_clause[0]].append(clause)
+                    watch_literals[-var].remove(clause)
+            #order needs to change as if both watch literals are false, even if a new one is found that is not watching, it should be a unit
+            # if len(not_watches_clause) != 0:
+            #     if partial_assignment[abs(watches_clause[0])]*abs(watches_clause[0]) != watches_clause[0]:
+            #         watch_literals[not_watches_clause[0]].append(clause)
+            #         watch_literals[-var].remove(clause)
+            #         #this might be sus, breaks if clauses have size bigger than 3
+            #         units.append(unassigned_literals[0])
+            #         partial_assignment[abs(unassigned_literals[0])] = int(unassigned_literals[0]/abs(unassigned_literals[0]))
 
-clause_set = load_dimacs("sat.txt")
+            #     else:
+            #         watch_literals[not_watches_clause[0]].append(clause)
+            #         watch_literals[-var].remove(clause)
+            #     continue
+            # else:
+            #     for i in watches_clause:
+            #         if i not in unassigned_literals:
+            #             if partial_assignment[abs(i)]*abs(i) != i:
+            #                 return partial_assignment,False,watch_literals
+            #         else:
+            #             units.append(i)
+            #             partial_assignment[abs(i)] = int(i/abs(i))
+            #             break
+    return partial_assignment,units,watch_literals
+clause_set = load_dimacs("LNP-6.txt")
 print(dpll_sat_solve(clause_set,[]))
 print(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1))
