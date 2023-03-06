@@ -310,7 +310,7 @@ def test(clause_set,L):
         if clause_set == True or clause_set == False:
             break
     # unit_propagate(clause_set)
-    print(clause_set)
+    return clause_set
     # assignments = []
     # for i in clause_set:
     #     assignments.append(i[0])
@@ -351,7 +351,7 @@ def branch(clause_set,partial_assignment,all_variables):
     else:
         return partial_assignment
 clause_set = load_dimacs("8queens.txt")
-L = [1, 11, 21, 26, 44, -64, -61, -59, -57, -56, -55, -53, -51, -49, -48, -47, -46, -45, -43, -42, -41, -39, -38, -37, -35, -34, -33, -32, -31, -30, -29, -28, -27, -25, -24, -23, -22, -20, -19, -18, -17, -16, -15, -14, -13, -12, -10, -9, -8, -7, -6, -5, -4, -3, -2]
+L = [-1, -2, -3, -4, -5, 6, -7, -8, -9, -10, -11, 12, -13, -14, -15, -16, -17, -18, -19, -20, -21, -22, 23, -24, 25, -26, -27, -28, -29, -30, -31, -32, -33, -34, -35, -36, -37, -38, -39, 40, -41, 42, -43, -44, -45, -46, -47, -48, -49, -50, -51, -52, 53, -54, -55, -56, -57, -58, 59, -60, -61, -62, -63, -64]
 print(test(clause_set,L))
 # print(branching_sat_solve(clause_set,[]))
 # print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =10, repeat = 1))/10)
