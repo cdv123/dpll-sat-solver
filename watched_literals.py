@@ -58,7 +58,7 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     return list(partial_assignment.values())
     
 def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2):
-    partial_assignment,units = unit_propagate(partial_assignment,units,watch_literals)
+    units = unit_propagate(partial_assignment,units,watch_literals)
     if units == False:
         return False
     assigned = [i for i in partial_assignment.values() if i !=0]
