@@ -43,6 +43,7 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
             watch_literals[clause_set[i][1]].append(clause_set[i])
     else:
         for i in range(len(clause_set)):
+            # clause_set[i] = set(clause_set[i])
             if len(clause_set[i]) == 1:
                 units.append(clause_set[i][0])
             else:
@@ -86,6 +87,8 @@ def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2):
 def unit_propagate(partial_assignment,units,watch_literals):
     #set unit clauses to true until no unit clauses are left
     while units != []:
+        if units == False:
+            return False
         units = set_var(partial_assignment,watch_literals,units[0],units)
         if units == False:
             return False
@@ -145,6 +148,7 @@ def isSat(clause,partial_assignment):
         if partial_assignment[abs(i)] == i:
             return True
     return False
-clause_set = load_dimacs("8queens.txt")
+
+clause_set = load_dimacs("CBS_k3_n100_m403_b10_0.txt")
 # print(dpll_sat_solve(clause_set,[]))
-print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 10, repeat = 1)))
+print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
