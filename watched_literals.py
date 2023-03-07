@@ -58,7 +58,7 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     return list(partial_assignment.values())
     
 def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2):
-    partial_assignment,units,watch_literals = unit_propagate(partial_assignment,units,watch_literals)
+    partial_assignment,units = unit_propagate(partial_assignment,units,watch_literals)
     if units == False:
         return False
     assigned = [i for i in partial_assignment.values() if i !=0]
@@ -70,14 +70,14 @@ def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2):
             break
     partial_assignment2 = partial_assignment.copy()   
     units2 = units[:]
-    partial_assignment,units,watch_literals = set_var(partial_assignment, watch_literals,var,units)
+    units = set_var(partial_assignment, watch_literals,var,units)
     partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2)
     if partial_assignment == False:
         partial_assignment = partial_assignment2
         units = units2
     else:
         return partial_assignment
-    partial_assignment,units,watch_literals = set_var(partial_assignment, watch_literals,-1*var,units)
+    units = set_var(partial_assignment, watch_literals,-1*var,units)
     partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2)
     if partial_assignment == False:
         return False
@@ -86,20 +86,20 @@ def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2):
 def unit_propagate(partial_assignment,units,watch_literals):
     #set unit clauses to true until no unit clauses are left
     while units != []:
-        partial_assignment,units,watch_literals = set_var(partial_assignment,watch_literals,units[0],units)
+        units = set_var(partial_assignment,watch_literals,units[0],units)
         if units == False:
-            return partial_assignment,False,watch_literals
+            return False
         units.pop(0) 
-    return partial_assignment,units,watch_literals
+    return units
 
 def set_var(partial_assignment,watch_literals,var,units):
     #if variable has already been assigned, return False as it shows it is trying to be assigned to a different value => need to backtrack
     #and partial_assignment[abs(var)]*var != var
     if partial_assignment[abs(var)] != 0 and partial_assignment[abs(var)] != var:
-        return partial_assignment,False,watch_literals
+        return False
     partial_assignment[abs(var)] = var
     if -var not in watch_literals:
-        return partial_assignment,units,watch_literals
+        return units
     clause = 0
     #go through watched clauses and try to assign to a
     # new watched literal to the clause
@@ -109,7 +109,7 @@ def set_var(partial_assignment,watch_literals,var,units):
             #if full assignment, check if clause is sat, if it is, d
             # do nothing, else, return False
             if len(unassigned_literals) == 0:
-                return partial_assignment,False,watch_literals
+                return False
             else:
                 not_watches_clause = [i for i in unassigned_literals if watch_literals[-var][clause] not in watch_literals[i]]
                 watches_clause = [i for i in watch_literals[-var][clause] if watch_literals[-var][clause] in watch_literals[i] and i != -var][0]
@@ -139,12 +139,12 @@ def set_var(partial_assignment,watch_literals,var,units):
                         watch_literals[-var].remove(watch_literals[-var][clause])
                         clause-=1
         clause+=1
-    return partial_assignment,units,watch_literals
+    return units
 def isSat(clause,partial_assignment):
     for i in clause:
         if partial_assignment[abs(i)] == i:
             return True
     return False
 clause_set = load_dimacs("8queens.txt")
-print(dpll_sat_solve(clause_set,[]))
-print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
+# print(dpll_sat_solve(clause_set,[]))
+print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 10, repeat = 1)))
