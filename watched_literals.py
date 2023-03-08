@@ -109,27 +109,27 @@ def set_var(partial_assignment,watch_literals,var,units):
     if -var not in watch_literals:
         return units
     clause = 0
-    relevantList = watch_literals[-var][:]
     #go through watched clauses and try to assign to a
     # new watched literal to the clause
-    for clause in relevantList:
-        if not isSat(clause,partial_assignment):
-            unassigned_literals = [i for i in clause if partial_assignment[abs(i)]==0]
+    while clause < len(watch_literals[-var]):
+        if not isSat(watch_literals[-var][clause],partial_assignment):
+            unassigned_literals = [i for i in watch_literals[-var][clause] if partial_assignment[abs(i)]==0]
             #if full assignment, check if clause is sat, if it is, d
             # do nothing, else, return False
             if len(unassigned_literals) == 0:
                 return False
             else:
-                not_watches_clause = [i for i in unassigned_literals if clause not in watch_literals[i]]
-                watches_clause = [i for i in clause if clause in watch_literals[i] and i != -var][0]
+                not_watches_clause = [i for i in unassigned_literals if watch_literals[-var][clause] not in watch_literals[i]]
+                watches_clause = [i for i in watch_literals[-var][clause] if watch_literals[-var][clause] in watch_literals[i] and i != -var][0]
                 #if only 1 unassinged literal, 3 cases, either this is not 
                 # a watch literal, then swap watch literals and add to units and assign to true
                 #or, if this a watch literal, do not swap, 
                 # but still add to units and assign to true
                 if len(unassigned_literals) == 1:
                     if unassigned_literals[0] != watches_clause:
-                        watch_literals[unassigned_literals[0]].append(clause)
-                        watch_literals[-var].remove(clause)
+                        watch_literals[unassigned_literals[0]].append(watch_literals[-var][clause])
+                        watch_literals[-var].remove(watch_literals[-var][clause])
+                        clause-=1
                     units.append(unassigned_literals[0])
                     partial_assignment[abs(unassigned_literals[0])] = unassigned_literals[0]
                 #if more than 1 assigned literals, mutliple cases:
@@ -137,13 +137,16 @@ def set_var(partial_assignment,watch_literals,var,units):
                 #otherwise, swap with watch literals
                 else:
                     if partial_assignment[abs(watches_clause)] != watches_clause and partial_assignment[abs(watches_clause)] !=0:
-                        watch_literals[unassigned_literals[0]].append(clause)
-                        watch_literals[watches_clause].remove(clause)
-                        watch_literals[unassigned_literals[1]].append(clause)
-                        watch_literals[-var].remove(clause)
+                        watch_literals[unassigned_literals[0]].append(watch_literals[-var][clause])
+                        watch_literals[watches_clause].remove(watch_literals[-var][clause])
+                        watch_literals[unassigned_literals[1]].append(watch_literals[-var][clause])
+                        watch_literals[-var].remove(watch_literals[-var][clause])
+                        clause-=1
                     else:
-                        watch_literals[not_watches_clause[0]].append(clause)
-                        watch_literals[-var].remove(clause)
+                        watch_literals[not_watches_clause[0]].append(watch_literals[-var][clause])
+                        watch_literals[-var].remove(watch_literals[-var][clause])
+                        clause-=1
+        clause+=1
     return units
 def isSat(clause,partial_assignment):
     for i in clause:
@@ -151,6 +154,6 @@ def isSat(clause,partial_assignment):
             return True
     return False
 
-clause_set = load_dimacs("8queens.txt")
+# clause_set = load_dimacs("colouring/sw100-16.cnf")
 # print(dpll_sat_solve(clause_set,[]))
-print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
+# print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
