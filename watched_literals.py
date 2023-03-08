@@ -10,6 +10,8 @@ def load_dimacs(file_name):
     count = 0
     for i in range(0,len(lines)):
         temp = lines[i].split()
+        if temp[0] == "%":
+            break
         if temp[0] == "p":
             count+=1
         elif temp[0] == "c":
@@ -39,26 +41,29 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     units = [i[0] for  i in clause_set if len(i) == 1]
     if units == []:
         for i in range(len(clause_set)):
-            watch_literals[clause_set[i][0]].append(clause_set[i])
-            watch_literals[clause_set[i][1]].append(clause_set[i])
+            if clause_set[i] not in watch_literals[clause_set[i][0]]:
+                watch_literals[clause_set[i][0]].append(clause_set[i])
+                watch_literals[clause_set[i][1]].append(clause_set[i])
     else:
         for i in range(len(clause_set)):
             # clause_set[i] = set(clause_set[i])
             if len(clause_set[i]) == 1:
                 units.append(clause_set[i][0])
             else:
-                watch_literals[clause_set[i][0]].append(clause_set[i])
-                watch_literals[clause_set[i][1]].append(clause_set[i])
+                if clause_set[i] not in watch_literals[clause_set[i][0]]:
+                    watch_literals[clause_set[i][0]].append(clause_set[i])
+                    watch_literals[clause_set[i][1]].append(clause_set[i])
     # try using dict comprehension
     # watch_literals = {key: [clause_set[i][0],clause_set[i][1]] for key in vars}
     #wrapper function needed as only initialise watched literals once
-    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2)
+    sat_clauses = []
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,sat_clauses)
     #obtain list of assignments from dictionary of assignments
     if partial_assignment == False:
         return False
     return list(partial_assignment.values())
     
-def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2):
+def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,sat_clauses):
     units = unit_propagate(partial_assignment,units,watch_literals)
     if units == False:
         return False
@@ -72,14 +77,14 @@ def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2):
     partial_assignment2 = partial_assignment.copy()   
     units2 = units[:]
     units = set_var(partial_assignment, watch_literals,var,units)
-    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2)
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,sat_clauses)
     if partial_assignment == False:
         partial_assignment = partial_assignment2
         units = units2
     else:
         return partial_assignment
     units = set_var(partial_assignment, watch_literals,-1*var,units)
-    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2)
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,sat_clauses)
     if partial_assignment == False:
         return False
     return partial_assignment
@@ -138,6 +143,7 @@ def set_var(partial_assignment,watch_literals,var,units):
                         watch_literals[-var].remove(watch_literals[-var][clause])
                         clause-=1
                     else:
+                        watches_clause2 = [i for i in watch_literals[-var][clause] if watch_literals[-var][clause] in watch_literals[i] and i != -var]
                         watch_literals[not_watches_clause[0]].append(watch_literals[-var][clause])
                         watch_literals[-var].remove(watch_literals[-var][clause])
                         clause-=1
@@ -149,6 +155,6 @@ def isSat(clause,partial_assignment):
             return True
     return False
 
-clause_set = load_dimacs("CBS_k3_n100_m403_b10_0.txt")
+clause_set = load_dimacs("colouring/sw100-16.cnf")
 # print(dpll_sat_solve(clause_set,[]))
 print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))

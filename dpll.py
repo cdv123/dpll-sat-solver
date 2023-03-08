@@ -350,9 +350,9 @@ def branch(clause_set,partial_assignment,all_variables):
         return False
     else:
         return partial_assignment
-clause_set = load_dimacs("8queens.txt")
-L = [-28, -37, -29, -36, -19, -46, -20, -38, -21, -27, -30, -35, -43, -22, -44, -45, -10, -55, -11, -18, -26, -34, 42, -47, -50, 12, -39, -51, -13, -31, -52, -14, 23, 53, -15, -54, -1, -2, -3, -4, -5, 6, -7, -8, -9, -17, 25, -33, -41, -49, -57, -64, -56, -58, -48, 59, 40, -60, -32, -61, -24, -62, -16, -63]
-print(test(clause_set,L))
+# clause_set = load_dimacs("8queens.txt")
+# L = [-28, -37, -29, -36, -19, -46, -20, -38, -21, -27, -30, -35, -43, -22, -44, -45, -10, -55, -11, -18, -26, -34, 42, -47, -50, 12, -39, -51, -13, -31, -52, -14, 23, 53, -15, -54, -1, -2, -3, -4, -5, 6, -7, -8, -9, -17, 25, -33, -41, -49, -57, -64, -56, -58, -48, 59, 40, -60, -32, -61, -24, -62, -16, -63]
+# print(test(clause_set,L))
 # print(branching_sat_solve(clause_set,[]))
 # print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =10, repeat = 1))/10)
 
