@@ -143,7 +143,6 @@ def set_var(partial_assignment,watch_literals,var,units):
                         watch_literals[-var].remove(watch_literals[-var][clause])
                         clause-=1
                     else:
-                        watches_clause2 = [i for i in watch_literals[-var][clause] if watch_literals[-var][clause] in watch_literals[i] and i != -var]
                         watch_literals[not_watches_clause[0]].append(watch_literals[-var][clause])
                         watch_literals[-var].remove(watch_literals[-var][clause])
                         clause-=1
@@ -155,6 +154,6 @@ def isSat(clause,partial_assignment):
             return True
     return False
 
-clause_set = load_dimacs("colouring/sw100-16.cnf")
+# clause_set = load_dimacs("colouring/sw100-16.cnf")
 # print(dpll_sat_solve(clause_set,[]))
 # print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
