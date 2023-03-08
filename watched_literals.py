@@ -157,4 +157,4 @@ def isSat(clause,partial_assignment):
 
 clause_set = load_dimacs("colouring/sw100-16.cnf")
 # print(dpll_sat_solve(clause_set,[]))
-print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
+# print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
