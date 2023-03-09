@@ -45,7 +45,31 @@ def simple_sat_solve(clause_set):
         if check(clause_set, truth_assignment) == True:
             return truth_assignment
     return False
-
+def branching_sat_solve2(clause_set,partial_assignment):
+    # print(partial_assignment)
+    if clause_set ==[]:
+        return partial_assignment
+    if clause_set == False:
+        return False
+    # clause_set= pure_literal_elimination(clause_set)
+    # partial_assignment += more_assignments
+    var = next_var(clause_set)
+    partial_assignment.append(var)
+    clause_set2 = set_var3(clause_set,partial_assignment[-1])
+    if clause_set2 == True:
+        return partial_assignment
+    if clause_set2 == False or branching_sat_solve2(clause_set2, partial_assignment) == False:
+        partial_assignment.pop()
+    else:
+        return partial_assignment
+    partial_assignment.append(var*-1)
+    clause_set2 = set_var3(clause_set,partial_assignment[-1])
+    if clause_set2 == True:
+        return partial_assignment
+    if clause_set2 == False or branching_sat_solve2(clause_set2, partial_assignment) == False:
+        partial_assignment.pop()
+        return False
+    return partial_assignment
 def branching_sat_solve(clause_set, partial_assignment):
     all_variables = []
     for i in clause_set:
@@ -261,8 +285,6 @@ def set_var3(clause_set,var):
                     clause_set2[-1].append(literal)
             if not clause_set2[-1]:
                 return False
-    if not clause_set2:
-        return True
     return clause_set2
 def dpll_wiki2(clause_set,partial_assignment):
     # print(partial_assignment)
@@ -325,11 +347,12 @@ def test(clause_set,L):
     #     if -i[0] in assignments:
     #         return False
     # return True
-clause_set = load_dimacs("W_2,3_ n=8.txt")
-L = [1,2,-3,4,5,-6,-7,-8,-9,-10,11,-12,-13,14,15,16]
-# print(clause_set)
-print(test(clause_set,L))
+clause_set = load_dimacs("8queens.txt")
+L = [-28, -37, -29, -43, -18, -38, -12, -46, -27, -23, -49, -8, -35, -13, -55, -44, -2, -57, -24, -54, -39, -10, -59, -4, -33, -21, 30, -26, -61, -16, -6, -47, -51, -32, -63, -22, -41, -52, -1, 11, -48, -14, -36, 17, -53, -58, -3, -31, -20, -42, -9, -64, -25, -5, -15, -56, -62, -19, -34, 7, 40, 45, 50, 60]
+# # print(clause_set)
+# print(test(clause_set,L))
 # print(dpll_wiki2(clause_set,[]))
-print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =1, repeat = 1)))
+print(branching_sat_solve2(clause_set,[]))
+# print(np.mean(timeit.repeat('branching_sat_solve2(clause_set,[])', globals = globals(), number =1, repeat = 1)))
 
     

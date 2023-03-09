@@ -21,9 +21,9 @@ def load_dimacs(file_name):
             for j in range(0, len(temp)-1):
                 clause_set[i-count].append(int(temp[j]))
     return clause_set
-
 def dpll_sat_solve(clause_set,partial_assignment=[]):
     watch_literals = {}
+    last_free_var = [0]
     #get all unique variables (first flatten list of lists)
     vars = list(itertools.chain.from_iterable(clause_set))
     vars = [var[0] for var in collections.Counter(vars).most_common()]
@@ -56,51 +56,55 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     # try using dict comprehension
     # watch_literals = {key: [clause_set[i][0],clause_set[i][1]] for key in vars}
     #wrapper function needed as only initialise watched literals once
-    sat_clauses = []
-    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,sat_clauses)
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var)
     #obtain list of assignments from dictionary of assignments
     if partial_assignment == False:
         return False
     return list(partial_assignment.values())
     
-def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,sat_clauses):
-    units = unit_propagate(partial_assignment,units,watch_literals)
+def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var):
+    units = unit_propagate(partial_assignment,units,watch_literals,last_free_var)
     if units == False:
         return False
     assigned = [i for i in partial_assignment.values() if i !=0]
     if len(assigned) == len(vars2):
         return partial_assignment
-    for i in vars2:
-        if partial_assignment[abs(i)] == 0:
-            var = i
-            break
+    if last_free_var[0] != 0 and partial_assignment[abs(last_free_var[0])] == 0:
+        var = last_free_var[0]
+    else:
+        for i in vars2:
+            if partial_assignment[abs(i)] == 0:
+                var = i
+                break
     partial_assignment2 = partial_assignment.copy()   
     units2 = units[:]
-    units = set_var(partial_assignment, watch_literals,var,units)
-    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,sat_clauses)
+    last_free_var2 = last_free_var[:]
+    units = set_var(partial_assignment, watch_literals,var,units,last_free_var)
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var)
     if partial_assignment == False:
         partial_assignment = partial_assignment2
         units = units2
+        last_free_var = last_free_var2
     else:
         return partial_assignment
-    units = set_var(partial_assignment, watch_literals,-1*var,units)
-    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,sat_clauses)
+    units = set_var(partial_assignment, watch_literals,-1*var,units,last_free_var)
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var)
     if partial_assignment == False:
         return False
     return partial_assignment
 
-def unit_propagate(partial_assignment,units,watch_literals):
+def unit_propagate(partial_assignment,units,watch_literals,last_free_var):
     #set unit clauses to true until no unit clauses are left
     while units != []:
         if units == False:
             return False
-        units = set_var(partial_assignment,watch_literals,units[0],units)
+        units = set_var(partial_assignment,watch_literals,units[0],units,last_free_var)
         if units == False:
             return False
         units.pop(0) 
     return units
 
-def set_var(partial_assignment,watch_literals,var,units):
+def set_var(partial_assignment,watch_literals,var,units,last_free_var):
     #if variable has already been assigned, return False as it shows it is trying to be assigned to a different value => need to backtrack
     #and partial_assignment[abs(var)]*var != var
     if partial_assignment[abs(var)] != 0 and partial_assignment[abs(var)] != var:
@@ -108,7 +112,6 @@ def set_var(partial_assignment,watch_literals,var,units):
     partial_assignment[abs(var)] = var
     if -var not in watch_literals:
         return units
-    clause = 0
     relevantList = watch_literals[-var][:]
     #go through watched clauses and try to assign to a
     # new watched literal to the clause
@@ -136,6 +139,7 @@ def set_var(partial_assignment,watch_literals,var,units):
                 #if both watch literals are false, swap both
                 #otherwise, swap with watch literals
                 else:
+                    last_free_var[0] = unassigned_literals[0]
                     if partial_assignment[abs(watches_clause)] != watches_clause and partial_assignment[abs(watches_clause)] !=0:
                         watch_literals[unassigned_literals[0]].append(clause)
                         watch_literals[watches_clause].remove(clause)
@@ -151,6 +155,6 @@ def isSat(clause,partial_assignment):
             return True
     return False
 
-# clause_set = load_dimacs("colouring/sw100-16.cnf")
-# print(dpll_sat_solve(clause_set,[]))
-# print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
+clause_set = load_dimacs("LNP-6.txt")
+print(dpll_sat_solve(clause_set,[]))
+print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 10, repeat = 1)))
