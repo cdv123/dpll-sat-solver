@@ -93,89 +93,33 @@ def set_var2(clause_set,var):
 
 # Q7 - unit propagate, with watch literal implementation, wrapper used to initialise the dictionary of watch literals
 def unit_propagate(clause_set):
-    # find all unique variables in clause set
-    vars = list(itertools.chain.from_iterable(clause_set))
-    vars = [var[0] for var in collections.Counter(vars).most_common()]
-    # use dict comprehension to initialise empty dictionary of size of the variables
-    watch_literals = {key: [] for key in vars}
-    units = [i[0] for  i in clause_set if len(i) == 1]
-    literals = list(np.abs(vars))
-    partial_assignment = dict.fromkeys(literals,0)
-    if units == []:
+    units = set([clause[0] for clause in clause_set if len(clause)==1])
+    if units == set():
         return clause_set
-    else:
-        for i in range(len(clause_set)):
-            # clause_set[i] = set(clause_set[i])
-            if len(clause_set[i]) == 1:
-                units.append(clause_set[i][0])
+    units2 = set([-clause[0] for clause in clause_set if len(clause)==1])
+    clause = 0
+    while clause < len(clause_set):
+        if len(clause_set[clause]) == 1:
+            units.add(clause_set[[clause]][0])
+            units2.add(-clause_set[[clause]][0])
+            clause_set.remove(clause_set[clause])
+            clause = -1
+        else:
+            if not units.isdisjoint(clause_set[clause]):
+                clause_set.remove(clause_set[clause])
+                continue
             else:
-                if clause_set[i] not in watch_literals[clause_set[i][0]]:
-                    watch_literals[clause_set[i][0]].append(clause_set[i])
-                    watch_literals[clause_set[i][1]].append(clause_set[i])
-    unit_propagate_wrapper(clause_set,watch_literals,units, partial_assignment)
-    assignment_list = set(partial_assignment.values())
-    assignment_list2 = set([-i for i in partial_assignment])
-    clause_set2 = clause_set[:]
-    for clause in clause_set2:
-        if not assignment_list.isdisjoint(clause):
-            clause_set.remove(clause)
-        elif not assignment_list2.isdisjoint(clause):  
-            clause = [i for i in clause if i not in assignment_list2.intersection(clause)] 
+                if not units2.isdisjoint(clause_set[clause]):
+                    intersection = units2.intersection(clause_set[clause])
+                    clause_set[clause] = [i for i in clause_set[clause] if i not in intersection]
+                    if len(clause_set[clause]) == 1:
+                        units.add(clause_set[clause][0])
+                        units2.add(-clause_set[clause][0])
+                        clause_set.remove(clause_set[clause])
+                        clause = -1
+        clause+=1   
     return clause_set
-def unit_propagate_wrapper(clause_set,watch_literals,units,partial_assignment):
-    # while the list of units is not empty, set the each element of the list to ture
-    while units != []:
-        if units == False:
-            return False
-        units = set_var3(partial_assignment,watch_literals,units[0],units)
-        if units == False:
-            return False
-        units.pop(0) 
-    return True
-def set_var3(partial_assignment,watch_literals,var,units):
-    #if variable has already been assigned, return False as it shows it is trying to be assigned to a different value => need to backtrack
-    #and partial_assignment[abs(var)]*var != var
-    if partial_assignment[abs(var)] != 0 and partial_assignment[abs(var)] != var:
-        return False
-    partial_assignment[abs(var)] = var
-    if -var not in watch_literals:
-        return units
-    relevantList = watch_literals[-var][:]
-    #go through watched clauses and try to assign to a
-    # new watched literal to the clause
-    for clause in relevantList:
-        if not isSat(clause,partial_assignment):
-            unassigned_literals = [i for i in clause if partial_assignment[abs(i)]==0]
-            #if full assignment, check if clause is sat, if it is, d
-            # do nothing, else, return False
-            if len(unassigned_literals) == 0:
-                return False
-            else:
-                not_watches_clause = [i for i in unassigned_literals if clause not in watch_literals[i]]
-                watches_clause = [i for i in clause if clause in watch_literals[i] and i != -var][0]
-                #if only 1 unassinged literal, 3 cases, either this is not 
-                # a watch literal, then swap watch literals and add to units and assign to true
-                #or, if this a watch literal, do not swap, 
-                # but still add to units and assign to true
-                if len(unassigned_literals) == 1:
-                    if unassigned_literals[0] != watches_clause:
-                        watch_literals[unassigned_literals[0]].append(clause)
-                        watch_literals[-var].remove(clause)
-                    units.append(unassigned_literals[0])
-                    partial_assignment[abs(unassigned_literals[0])] = unassigned_literals[0]
-                #if more than 1 assigned literals, mutliple cases:
-                #if both watch literals are false, swap both
-                #otherwise, swap with watch literals
-                else:
-                    if partial_assignment[abs(watches_clause)] != watches_clause and partial_assignment[abs(watches_clause)] !=0:
-                        watch_literals[unassigned_literals[0]].append(clause)
-                        watch_literals[watches_clause].remove(clause)
-                        watch_literals[unassigned_literals[1]].append(clause)
-                        watch_literals[-var].remove(clause)
-                    else:
-                        watch_literals[not_watches_clause[0]].append(clause)
-                        watch_literals[-var].remove(clause)
-    return units
+                
 # Q8 - dpll_sat_solve, implemented using watch literals, with the heuristic of last free variable being used
 def dpll_sat_solve(clause_set,partial_assignment=[]):
     watch_literals = {}
