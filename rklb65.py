@@ -2,7 +2,8 @@ import numpy as np
 import copy
 import itertools
 import collections
-import timeit
+
+# Q4 imports text file and makes clause set a list of lists
 def load_dimacs(file_name):
     example = open(file_name, "r")
     lines = example.readlines()
@@ -10,15 +11,18 @@ def load_dimacs(file_name):
     count = 0
     for i in range(0,len(lines)):
         temp = lines[i].split()
+        # if line begins with p or c, skip
         if temp[0] == "p":
             count+=1
         elif temp[0] == "c":
             count+=1
+        #else, make a new list and append the numbers on that line except 0
         else:
             clause_set.append([])
             for j in range(0, len(temp)-1):
                 clause_set[i-count].append(int(temp[j]))
     return clause_set
+# Verifies that every clause is sat, and hence that the clause set is sat as a result
 def check(clause_set, truth_assignment):
     for clause in clause_set:
         for literal in clause:
@@ -27,10 +31,7 @@ def check(clause_set, truth_assignment):
             elif literal == clause[-1]:
                 return False
     return True
-def is_valid(clause_set,partial_assignment, all_variables):
-    if check(clause_set, partial_assignment) == True or len(partial_assignment) < len(all_variables):
-        return True
-    return False
+# Q5 - simple sat solve
 def simple_sat_solve(clause_set):
     all_variables = []
     for i in clause_set:
@@ -45,237 +46,40 @@ def simple_sat_solve(clause_set):
         if check(clause_set, truth_assignment) == True:
             return truth_assignment
     return False
-def branching_sat_solve2(clause_set,partial_assignment):
-    # print(partial_assignment)
+
+# Using the most common variable heuristic, counts how much each each literal appears and returns the most common one
+def next_var(clause_set):
+    clause_set2 = list(itertools.chain.from_iterable(clause_set))
+    return collections.Counter(clause_set2).most_common(1)[0][0]
+
+# Q6 - branching_sat_solve, checks if clause is sat or unsat, if not yet sat or unsat, branches on variable
+def branching_sat_solve(clause_set,partial_assignment):
+    #since each time a clause is sat, it is removed, an empty list means the clause is sat
     if clause_set ==[]:
         return partial_assignment
     if clause_set == False:
         return False
-    # clause_set= pure_literal_elimination(clause_set)
-    # partial_assignment += more_assignments
+    # calls next var function to branch on the most common variable
     var = next_var(clause_set)
     partial_assignment.append(var)
-    clause_set2 = set_var3(clause_set,partial_assignment[-1])
+    # set var to true
+    clause_set2 = set_var2(clause_set,partial_assignment[-1])
     if clause_set2 == True:
         return partial_assignment
-    if clause_set2 == False or branching_sat_solve2(clause_set2, partial_assignment) == False:
+    if clause_set2 == False or branching_sat_solve(clause_set2, partial_assignment) == False:
         partial_assignment.pop()
     else:
         return partial_assignment
     partial_assignment.append(var*-1)
-    clause_set2 = set_var3(clause_set,partial_assignment[-1])
+    # set -1 * var to true 
+    clause_set2 = set_var2(clause_set,partial_assignment[-1])
     if clause_set2 == True:
         return partial_assignment
-    if clause_set2 == False or branching_sat_solve2(clause_set2, partial_assignment) == False:
+    if clause_set2 == False or branching_sat_solve(clause_set2, partial_assignment) == False:
         partial_assignment.pop()
         return False
     return partial_assignment
-def branching_sat_solve(clause_set, partial_assignment):
-    all_variables = []
-    for i in clause_set:
-        for j in i:
-            if abs(j) not in all_variables:
-                all_variables.append(abs(j))
-    if is_valid(clause_set, partial_assignment, all_variables):
-        if check(clause_set,partial_assignment):
-            return partial_assignment
-        partial_assignment.append(all_variables[len(partial_assignment)]*1)
-        if branching_sat_solve(clause_set, partial_assignment) == False:
-            partial_assignment.pop()
-        else:
-            return partial_assignment
-        partial_assignment.append(all_variables[len(partial_assignment)]*-1)
-        if branching_sat_solve(clause_set, partial_assignment) == False:
-            partial_assignment.pop()
-        else:
-            return partial_assignment
-            
-    return False
-def unit_propagate(clause_set):
-    assignments = []
-    i = 0
-    while i < len(clause_set):
-        if len(clause_set[i]) == 1:
-            unit = clause_set[i][0]
-            clause_set.remove(clause_set[i])
-            assignments.append(unit)
-            i-=1
-
-        i +=1 
-    i = 0
-    while i < len(assignments):
-        clause = 0
-        
-        while clause < len(clause_set):
-            if assignments[i] in clause_set[clause]:
-                clause_set.remove(clause_set[clause])
-                if clause != len(clause_set)-1:
-                    clause-=1
-            else:
-                # if len(clause_set) > 3:
-                    while assignments[i]*-1 in clause_set[clause]:
-                        clause_set[clause].remove(assignments[i]*-1)
-                        if len(clause_set[clause]) == 1:
-                            assignments.append(clause_set[clause][0])
-                            clause_set.remove(clause_set[clause])
-                            if clause != len(clause_set)-1:
-                                clause-=1
-                        
-            clause+=1
-        i+=1
-
-    for i in assignments:
-        clause_set.append([i])
-    assignments = []
-    return clause_set
-def unit_propagate2(clause_set,units = set(), units2 = set()):
-    extra = False
-    for clause in clause_set:
-        if len(clause) == 1:
-            units.add(-1*clause[0])
-            units2.add(clause[0])
-            extra = True
-    clause = 0
-    while clause < len(clause_set):
-        if len(clause_set[clause]) == 0:
-            return False
-        if not units2.isdisjoint(set(clause_set[clause])):
-            clause_set.remove(clause_set[clause])
-            clause-=1
-        elif not units.isdisjoint(set(clause_set[clause])):
-            for i in list(units.intersection(set(clause_set[clause]))):
-                clause_set[clause].remove(i)
-            if len(clause_set[clause]) == 0:
-                print("b")
-                return False
-        clause+=1
-    if units != set() and not units.isdisjoint(units2) == False:
-        return False
-    if extra == False:
-        return clause_set
-    return unit_propagate2(clause_set,units,units2)
-def unit_propagate4(clause_set, units =set(), units2 = set()):
-    clause = 0
-    extra = False
-    while clause< len(clause_set):
-        if len(clause_set[clause]) == 1:
-            units2.add(clause_set[clause][0])
-            units.add(-1*clause_set[clause][0])
-            extra = True
-        elif len(clause_set[clause]) == 0:
-            return False
-        elif not units2.isdisjoint(set(clause_set[clause])):
-            clause_set.remove(clause_set[clause])
-            clause-=1
-        elif not units.isdisjoint(set(clause_set[clause])):
-            for i in list(units.intersection(set(clause_set[clause]))):
-                clause_set[clause].remove(i)
-            if len(clause_set[clause]) == 0:
-                return False
-            if len(clause_set[clause]) == 1:
-                units.add(-1*clause_set[clause][0])
-                units2.add(clause_set[clause][0])
-                extra = True
-                clause_set.remove(clause_set[clause])
-                clause-= -1
-        clause+=1
-    if units != set() and not units.isdisjoint(units2) == False:
-        return False
-    if extra == False:
-        return clause_set
-    return unit_propagate4(clause_set,units,units2)
-def unit_propagate3(clause_set):
-    units = set()
-    units2 = set()
-    clause = 0
-    while clause < len(clause_set):
-        if len(clause_set[clause]) == 1:
-            units.add(-1*clause_set[clause][0])
-            units2.add(clause_set[clause][0])
-            clause_set.remove(clause_set[clause])
-            clause = -1
-        else:
-            if not clause_set[clause]:
-                return False
-            if not units2.isdisjoint(clause_set[clause]):
-                clause_set.remove(clause_set[clause])
-                continue
-            elif not units.isdisjoint(clause_set[clause]):
-                for i in units.intersection(clause_set[clause]):
-                    clause_set[clause].remove(i)
-                if len(clause_set[clause]) == 1:
-                    if not units.isdisjoint(clause_set[clause]):
-                        return False
-                    units.add(-1*clause_set[clause][0])
-                    units2.add(clause_set[clause][0])
-                    clause_set.remove(clause_set[clause])
-                    clause = -1
-                elif not clause_set[clause]:
-                    return False
-        clause+=1
-    return clause_set
-def unit_propagate5(clause_set):
-    units = []
-    units2 = []
-    clause = 0
-    while clause < len(clause_set):
-        if len(clause_set[clause]) == 1:
-            if clause_set[clause][0] in units:
-                return False
-            units.append(-1*clause_set[clause][0])
-            units2.append(clause_set[clause][0])
-            clause_set.remove(clause_set[clause])
-            clause = -1
-        else:
-            if len(clause_set[clause]) == 0:
-                return False
-            for i in units2:
-                if i in clause_set[clause]:
-                    clause_set.remove(clause_set[clause])
-                    continue
-            for i in units:
-                while -i in clause_set[clause]: 
-                    clause_set[clause].remove(-i)
-            if len(clause_set[clause]) == 1:
-                if not set(clause_set[clause]).isdisjoint(units):
-                    return False
-                units.add(-1*clause_set[clause][0])
-                units2.add(clause_set[clause][0])
-                clause_set.remove(clause_set[clause])
-                clause = -1
-            elif len(clause_set[clause]) == 0:
-                return False
-        clause+=1
-    return clause_set
-
-def next_var(clause_set):
-    clause_set2 = list(itertools.chain.from_iterable(clause_set))
-    return collections.Counter(clause_set2).most_common(1)[0][0]
-def set_var(clause_set,var):
-    clause = 0
-    while clause < len(clause_set):
-        if var in clause_set[clause]:
-            clause_set.remove(clause_set[clause])
-            if clause != len(clause_set)-1:
-                clause-=1
-        else:
-            while -1*var in clause_set[clause]:
-                clause_set[clause].remove(var*-1)
-        clause+=1
-    return clause_set
 def set_var2(clause_set,var):
-    clause_set2 = []
-    for clause in clause_set:
-        if var not in clause:
-            clause_set2.append(copy.copy(clause))
-            while not set([-1*var]).isdisjoint(clause_set2[-1]):
-                clause_set2[-1].remove(-1*var)
-                if clause ==[]:
-                    return False
-    if clause_set2 == []:
-        return True
-    return clause_set2
-def set_var3(clause_set,var):
     clause_set2 = []
     for clause in clause_set:
         if var not in clause:
@@ -286,73 +90,222 @@ def set_var3(clause_set,var):
             if not clause_set2[-1]:
                 return False
     return clause_set2
-def dpll_wiki2(clause_set,partial_assignment):
-    # print(partial_assignment)
-    clause_set = unit_propagate3(clause_set)
-    if clause_set ==[]:
-        return partial_assignment
-    if not clause_set:
+
+# Q7 - unit propagate, with watch literal implementation, wrapper used to initialise the dictionary of watch literals
+def unit_propagate(clause_set):
+    # find all unique variables in clause set
+    vars = list(itertools.chain.from_iterable(clause_set))
+    vars = [var[0] for var in collections.Counter(vars).most_common()]
+    # use dict comprehension to initialise empty dictionary of size of the variables
+    watch_literals = {key: [] for key in vars}
+    units = [i[0] for  i in clause_set if len(i) == 1]
+    literals = list(np.abs(vars))
+    partial_assignment = dict.fromkeys(literals,0)
+    if units == []:
+        return clause_set
+    else:
+        for i in range(len(clause_set)):
+            # clause_set[i] = set(clause_set[i])
+            if len(clause_set[i]) == 1:
+                units.append(clause_set[i][0])
+            else:
+                if clause_set[i] not in watch_literals[clause_set[i][0]]:
+                    watch_literals[clause_set[i][0]].append(clause_set[i])
+                    watch_literals[clause_set[i][1]].append(clause_set[i])
+    unit_propagate_wrapper(clause_set,watch_literals,units, partial_assignment)
+    assignment_list = set(partial_assignment.values())
+    assignment_list2 = set([-i for i in partial_assignment])
+    clause_set2 = clause_set[:]
+    for clause in clause_set2:
+        if not assignment_list.isdisjoint(clause):
+            clause_set.remove(clause)
+        elif not assignment_list2.isdisjoint(clause):  
+            clause = [i for i in clause if i not in assignment_list2.intersection(clause)] 
+    return clause_set
+def unit_propagate_wrapper(clause_set,watch_literals,units,partial_assignment):
+    # while the list of units is not empty, set the each element of the list to ture
+    while units != []:
+        if units == False:
+            return False
+        units = set_var3(partial_assignment,watch_literals,units[0],units)
+        if units == False:
+            return False
+        units.pop(0) 
+    return True
+def set_var3(partial_assignment,watch_literals,var,units):
+    #if variable has already been assigned, return False as it shows it is trying to be assigned to a different value => need to backtrack
+    #and partial_assignment[abs(var)]*var != var
+    if partial_assignment[abs(var)] != 0 and partial_assignment[abs(var)] != var:
         return False
-    # clause_set= pure_literal_elimination(clause_set)
-    # partial_assignment += more_assignments
-    var = next_var(clause_set)
-    partial_assignment.append(var)
-    clause_set2 = set_var3(clause_set,partial_assignment[-1])
-    if clause_set2 == True:
+    partial_assignment[abs(var)] = var
+    if -var not in watch_literals:
+        return units
+    relevantList = watch_literals[-var][:]
+    #go through watched clauses and try to assign to a
+    # new watched literal to the clause
+    for clause in relevantList:
+        if not isSat(clause,partial_assignment):
+            unassigned_literals = [i for i in clause if partial_assignment[abs(i)]==0]
+            #if full assignment, check if clause is sat, if it is, d
+            # do nothing, else, return False
+            if len(unassigned_literals) == 0:
+                return False
+            else:
+                not_watches_clause = [i for i in unassigned_literals if clause not in watch_literals[i]]
+                watches_clause = [i for i in clause if clause in watch_literals[i] and i != -var][0]
+                #if only 1 unassinged literal, 3 cases, either this is not 
+                # a watch literal, then swap watch literals and add to units and assign to true
+                #or, if this a watch literal, do not swap, 
+                # but still add to units and assign to true
+                if len(unassigned_literals) == 1:
+                    if unassigned_literals[0] != watches_clause:
+                        watch_literals[unassigned_literals[0]].append(clause)
+                        watch_literals[-var].remove(clause)
+                    units.append(unassigned_literals[0])
+                    partial_assignment[abs(unassigned_literals[0])] = unassigned_literals[0]
+                #if more than 1 assigned literals, mutliple cases:
+                #if both watch literals are false, swap both
+                #otherwise, swap with watch literals
+                else:
+                    if partial_assignment[abs(watches_clause)] != watches_clause and partial_assignment[abs(watches_clause)] !=0:
+                        watch_literals[unassigned_literals[0]].append(clause)
+                        watch_literals[watches_clause].remove(clause)
+                        watch_literals[unassigned_literals[1]].append(clause)
+                        watch_literals[-var].remove(clause)
+                    else:
+                        watch_literals[not_watches_clause[0]].append(clause)
+                        watch_literals[-var].remove(clause)
+    return units
+# Q8 - dpll_sat_solve, implemented using watch literals, with the heuristic of last free variable being used
+def dpll_sat_solve(clause_set,partial_assignment=[]):
+    watch_literals = {}
+    last_free_var = [0]
+    #get all unique variables (first flatten list of lists)
+    vars = list(itertools.chain.from_iterable(clause_set))
+    vars = [var[0] for var in collections.Counter(vars).most_common()]
+    vars2 = []
+    for i in vars:
+        if -i not in vars2:
+            vars2.append(i)
+    literals = list(np.abs(vars))
+    partial_assignment = {}
+    units = []
+    #intialise partial assignments as a dictionary, 0 is unassigned, 1 is set to true, -1, is set to false
+    partial_assignment = dict.fromkeys(literals,0)
+    #initialise dictionary of watched literals, key = literal, value = clauses being watched
+    watch_literals = {key: [] for key in vars}
+    units = [i[0] for  i in clause_set if len(i) == 1]
+    if units == []:
+        for i in range(len(clause_set)):
+            if clause_set[i] not in watch_literals[clause_set[i][0]]:
+                watch_literals[clause_set[i][0]].append(clause_set[i])
+                watch_literals[clause_set[i][1]].append(clause_set[i])
+    else:
+        for i in range(len(clause_set)):
+            # clause_set[i] = set(clause_set[i])
+            if len(clause_set[i]) == 1:
+                units.append(clause_set[i][0])
+            else:
+                if clause_set[i] not in watch_literals[clause_set[i][0]]:
+                    watch_literals[clause_set[i][0]].append(clause_set[i])
+                    watch_literals[clause_set[i][1]].append(clause_set[i])
+    # try using dict comprehension
+    # watch_literals = {key: [clause_set[i][0],clause_set[i][1]] for key in vars}
+    #wrapper function needed as only initialise watched literals once
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var)
+    #obtain list of assignments from dictionary of assignments
+    if partial_assignment == False:
+        return False
+    return list(partial_assignment.values())   
+def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var):
+    units = unit_propagate2(partial_assignment,units,watch_literals,last_free_var)
+    if units == False:
+        return False
+    assigned = [i for i in partial_assignment.values() if i !=0]
+    if len(assigned) == len(vars2):
         return partial_assignment
-    if clause_set2 == False or dpll_wiki2(clause_set2, partial_assignment) == False:
-        partial_assignment.pop()
+    if last_free_var[0] != 0 and partial_assignment[abs(last_free_var[0])] == 0:
+        var = last_free_var[0]
+    else:
+        for i in vars2:
+            if partial_assignment[abs(i)] == 0:
+                var = i
+                break
+    partial_assignment2 = partial_assignment.copy()   
+    units2 = units[:]
+    last_free_var2 = last_free_var[:]
+    units = set_var(partial_assignment, watch_literals,var,units,last_free_var)
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var)
+    if partial_assignment == False:
+        partial_assignment = partial_assignment2
+        units = units2
+        last_free_var = last_free_var2
     else:
         return partial_assignment
-    partial_assignment.append(var*-1)
-    clause_set2 = set_var3(clause_set,partial_assignment[-1])
-    if clause_set2 == True:
-        return partial_assignment
-    if clause_set2 == False or dpll_wiki2(clause_set2, partial_assignment) == False:
-        partial_assignment.pop()
+    units = set_var(partial_assignment, watch_literals,-1*var,units,last_free_var)
+    partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var)
+    if partial_assignment == False:
         return False
     return partial_assignment
-def pure_literal_elimination(clause_set):
-    flat_clause_set = [item for sublist in clause_set for item in sublist]
-    clause_set2 = list(itertools.chain.from_iterable(clause_set))
-    counters = collections.Counter(clause_set2)
-    print(counters)
-    all_literals = list(np.unique(flat_clause_set))
-    set_literals = set(all_literals)
-    pure_literals = set()
-    for i in all_literals:
-        if set_literals.isdisjoint([-1*i]):
-            pure_literals.add(i)
-            # partial_asignment2.append(i)
-    if pure_literals == set():
-        return clause_set
-    clause = 0
-    while clause < len(clause_set):
-        if not set(clause_set[clause]).isdisjoint(pure_literals):
-            clause_set.remove(clause_set[clause])
-            clause-=1
-        clause+=1
-    return pure_literal_elimination(clause_set)
-def test(clause_set,L):
-    for i in L:
-        clause_set = set_var(clause_set,i)
-    # unit_propagate2(clause_set)
-    print(clause_set)
-    # assignments = []
-    # for i in clause_set:
-    #     assignments.append(i[0])
-    # for i in clause_set:
-    #     if len(i) != 1:
-    #         return False
-    #     if -i[0] in assignments:
-    #         return False
-    # return True
-clause_set = load_dimacs("8queens.txt")
-L = [-28, -37, -29, -43, -18, -38, -12, -46, -27, -23, -49, -8, -35, -13, -55, -44, -2, -57, -24, -54, -39, -10, -59, -4, -33, -21, 30, -26, -61, -16, -6, -47, -51, -32, -63, -22, -41, -52, -1, 11, -48, -14, -36, 17, -53, -58, -3, -31, -20, -42, -9, -64, -25, -5, -15, -56, -62, -19, -34, 7, 40, 45, 50, 60]
-# # print(clause_set)
-# print(test(clause_set,L))
-# print(dpll_wiki2(clause_set,[]))
-print(branching_sat_solve2(clause_set,[]))
-# print(np.mean(timeit.repeat('branching_sat_solve2(clause_set,[])', globals = globals(), number =1, repeat = 1)))
 
-    
+def unit_propagate2(partial_assignment,units,watch_literals,last_free_var):
+    #set unit clauses to true until no unit clauses are left
+    while units != []:
+        if units == False:
+            return False
+        units = set_var(partial_assignment,watch_literals,units[0],units,last_free_var)
+        if units == False:
+            return False
+        units.pop(0) 
+    return units
+
+def set_var(partial_assignment,watch_literals,var,units,last_free_var):
+    #if variable has already been assigned, return False as it shows it is trying to be assigned to a different value => need to backtrack
+    #and partial_assignment[abs(var)]*var != var
+    if partial_assignment[abs(var)] != 0 and partial_assignment[abs(var)] != var:
+        return False
+    partial_assignment[abs(var)] = var
+    if -var not in watch_literals:
+        return units
+    relevantList = watch_literals[-var][:]
+    #go through watched clauses and try to assign to a
+    # new watched literal to the clause
+    for clause in relevantList:
+        if not isSat(clause,partial_assignment):
+            unassigned_literals = [i for i in clause if partial_assignment[abs(i)]==0]
+            #if full assignment, check if clause is sat, if it is, d
+            # do nothing, else, return False
+            if len(unassigned_literals) == 0:
+                return False
+            else:
+                not_watches_clause = [i for i in unassigned_literals if clause not in watch_literals[i]]
+                watches_clause = [i for i in clause if clause in watch_literals[i] and i != -var][0]
+                #if only 1 unassinged literal, 3 cases, either this is not 
+                # a watch literal, then swap watch literals and add to units and assign to true
+                #or, if this a watch literal, do not swap, 
+                # but still add to units and assign to true
+                if len(unassigned_literals) == 1:
+                    if unassigned_literals[0] != watches_clause:
+                        watch_literals[unassigned_literals[0]].append(clause)
+                        watch_literals[-var].remove(clause)
+                    units.append(unassigned_literals[0])
+                    partial_assignment[abs(unassigned_literals[0])] = unassigned_literals[0]
+                #if more than 1 assigned literals, mutliple cases:
+                #if both watch literals are false, swap both
+                #otherwise, swap with watch literals
+                else:
+                    last_free_var[0] = unassigned_literals[0]
+                    if partial_assignment[abs(watches_clause)] != watches_clause and partial_assignment[abs(watches_clause)] !=0:
+                        watch_literals[unassigned_literals[0]].append(clause)
+                        watch_literals[watches_clause].remove(clause)
+                        watch_literals[unassigned_literals[1]].append(clause)
+                        watch_literals[-var].remove(clause)
+                    else:
+                        watch_literals[not_watches_clause[0]].append(clause)
+                        watch_literals[-var].remove(clause)
+    return units
+def isSat(clause,partial_assignment):
+    for i in clause:
+        if partial_assignment[abs(i)] == i:
+            return True
+    return False
