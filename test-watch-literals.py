@@ -31,6 +31,8 @@ for i in range(1,1001):
     if maybe == False:
         print(i)
         print("False")
+    if i==1000:
+        print("True")
 for i in range(1,101):
     clause_set = load_dimacs(f'colouring/sw100-{i}.cnf')
     result = dpll_sat_solve(clause_set,[])

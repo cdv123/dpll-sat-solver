@@ -123,6 +123,7 @@ def unit_propagate(clause_set):
 # Q8 - dpll_sat_solve, implemented using watch literals, with the heuristic of last free variable being used
 def dpll_sat_solve(clause_set,partial_assignment=[]):
     watch_literals = {}
+    #last free variable used for heuristic, implemented as list of length 1 so that it is mutable and does not need to be returned
     last_free_var = [0]
     #get all unique variables (first flatten list of lists)
     vars = list(itertools.chain.from_iterable(clause_set))
@@ -138,7 +139,11 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     partial_assignment = dict.fromkeys(literals,0)
     #initialise dictionary of watched literals, key = literal, value = clauses being watched
     watch_literals = {key: [] for key in vars}
+    #find all units in the clause_set
     units = [i[0] for  i in clause_set if len(i) == 1]
+    #removes duplicate clauses
+    clause_set = [list(clause) for clause in set(tuple(clause) for clause in clause_set)]
+    #unless clause is a unit clause from the beginning, add clause to watch literals dictionary
     if units == []:
         for i in range(len(clause_set)):
             if clause_set[i] not in watch_literals[clause_set[i][0]]:
@@ -147,9 +152,7 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     else:
         for i in range(len(clause_set)):
             # clause_set[i] = set(clause_set[i])
-            if len(clause_set[i]) == 1:
-                units.append(clause_set[i][0])
-            else:
+            if len(clause_set[i]) != 1:
                 if clause_set[i] not in watch_literals[clause_set[i][0]]:
                     watch_literals[clause_set[i][0]].append(clause_set[i])
                     watch_literals[clause_set[i][1]].append(clause_set[i])
