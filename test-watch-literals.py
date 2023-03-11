@@ -24,15 +24,15 @@ def load_dimacs(file_name):
                 clause_set[i-count].append(int(temp[j]))
     return clause_set
 
-for i in range(1,1001):
-    clause_set = load_dimacs(f'newSatInstances/uf20-0{i}.cnf')
-    result = dpll_sat_solve(clause_set,[])
-    maybe = test(clause_set,result)
-    if maybe == False:
-        print(i)
-        print("False")
-    if i==1000:
-        print("True")
+# for i in range(1,1001):
+#     clause_set = load_dimacs(f'newSatInstances/uf20-0{i}.cnf')
+#     result = dpll_sat_solve(clause_set,[])
+#     maybe = test(clause_set,result)
+#     if maybe == False:
+#         print(i)
+#         print("False")
+#     if i==1000:
+#         print("True")
 for i in range(1,101):
     clause_set = load_dimacs(f'colouring/sw100-{i}.cnf')
     result = dpll_sat_solve(clause_set,[])
