@@ -38,11 +38,11 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     partial_assignment = dict.fromkeys(literals,0)
     #initialise dictionary of watched literals, key = literal, value = clauses being watched
     watch_literals = {key: [] for key in vars}
-    # clause_set = [list(clause) for clause in set(tuple(clause) for clause in clause_set)]
+    clause_set = [list(clause) for clause in set(tuple(clause) for clause in clause_set)]
     units = [i[0] for  i in clause_set if len(i) == 1]
     if units == []:
         for i in range(len(clause_set)):
-            if clause_set[i] not in watch_literals[clause_set[i][0]]:
+            # if clause_set[i] not in watch_literals[clause_set[i][0]]:
                 watch_literals[clause_set[i][0]].append(clause_set[i])
                 watch_literals[clause_set[i][1]].append(clause_set[i])
     else:
@@ -51,7 +51,7 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
             if len(clause_set[i]) == 1:
                 units.append(clause_set[i][0])
             else:
-                if clause_set[i] not in watch_literals[clause_set[i][0]]:
+                # if clause_set[i] not in watch_literals[clause_set[i][0]]:
                     watch_literals[clause_set[i][0]].append(clause_set[i])
                     watch_literals[clause_set[i][1]].append(clause_set[i])
     # try using dict comprehension
@@ -128,26 +128,38 @@ def set_var(partial_assignment,watch_literals,var,units,last_free_var):
                 #or, if this a watch literal, do not swap, 
                 # but still add to units and assign to true
                 if len(unassigned_literals) == 1:
-                    if clause not in watch_literals[unassigned_literals[0]]:
+                    if clause.index(unassigned_literals[0])>1:
+                        indexVar = 0 if clause[0] == -var else 1
                         watch_literals[unassigned_literals[0]].append(clause)
                         watch_literals[-var].remove(clause)
+                        a,b = indexVar, clause.index(unassigned_literals[0])
+                        clause[b], clause[a] = clause[a], clause[b]
                     units.append(unassigned_literals[0])
                     partial_assignment[abs(unassigned_literals[0])] = unassigned_literals[0]
                 #if more than 1 assigned literals, mutliple cases:
                 #if both watch literals are false, swap both
                 #otherwise, swap with watch literals
                 else:
-                    watches_clause = [i for i in clause if clause in watch_literals[i] and i != -var][0]
+                    indexVar = 0 if clause[0] == -var else 1
+                    watches_clause = clause[1] if indexVar == 0 else clause[0]
+                    # watches_clause = [i for i in clause if clause.index(i)<2 and i != -var][0]
                     last_free_var[0] = unassigned_literals[-1]
                     if partial_assignment[abs(watches_clause)] != watches_clause and partial_assignment[abs(watches_clause)] !=0:
                         watch_literals[unassigned_literals[0]].append(clause)
                         watch_literals[watches_clause].remove(clause)
+                        a,b = clause.index(watches_clause), clause.index(unassigned_literals[0])
+                        clause[b], clause[a] = clause[a], clause[b]
                         watch_literals[unassigned_literals[1]].append(clause)
                         watch_literals[-var].remove(clause)
+                        a,b = clause.index(-var), clause.index(unassigned_literals[1])
+                        clause[b], clause[a] = clause[a], clause[b]
                     else:
-                        not_watches_clause = [i for i in unassigned_literals if clause not in watch_literals[i]]
+                        not_watches_clause = [i for i in unassigned_literals if clause.index(i)>1]
                         watch_literals[not_watches_clause[0]].append(clause)
                         watch_literals[-var].remove(clause)
+                        
+                        a,b = clause.index(-var), clause.index(not_watches_clause[0])
+                        clause[b], clause[a] = clause[a], clause[b]
     return units
 def isSat(clause,partial_assignment):
     for i in clause:
@@ -156,6 +168,6 @@ def isSat(clause,partial_assignment):
     return False
 
 
-clause_set = load_dimacs("n100.txt")
-print(dpll_sat_solve(clause_set,[]))
-# print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))
+clause_set = load_dimacs("gt.txt")
+# print(dpll_sat_solve(clause_set,[]))
+print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 10, repeat = 1)))
