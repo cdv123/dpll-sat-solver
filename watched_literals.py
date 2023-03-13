@@ -78,7 +78,7 @@ def dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_fr
                 return partial_assignment
     partial_assignment2 = partial_assignment.copy()   
     units2 = units[:]
-    last_free_var2 = last_free_var[:]
+    last_free_var2 = last_free_var[:]  
     units = set_var(partial_assignment, watch_literals,var,units,last_free_var)
     partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var)
     if partial_assignment == False:
@@ -120,7 +120,7 @@ def set_var(partial_assignment,watch_literals,var,units,last_free_var):
             unassigned_literals = [i for i in clause if partial_assignment[abs(i)]==0]
             #if full assignment, check if clause is sat, if it is, d
             # do nothing, else, return False
-            if len(unassigned_literals) == 0:
+            if not unassigned_literals:
                 return False
             else:
                 #if only 1 unassinged literal, 3 cases, either this is not 
@@ -156,6 +156,6 @@ def isSat(clause,partial_assignment):
     return False
 
 
-clause_set = load_dimacs("gt.txt")
-# print(dpll_sat_solve(clause_set,[]))
-print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 10, repeat = 1)))
+clause_set = load_dimacs("n100.txt")
+print(dpll_sat_solve(clause_set,[]))
+# print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1)))

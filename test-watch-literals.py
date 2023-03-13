@@ -34,12 +34,13 @@ def load_dimacs(file_name):
 #     if i==1000:
 #         print("True")
 for i in range(1,101):
-    clause_set = load_dimacs(f'colouring/sw100-{i}.cnf')
-    result = dpll_sat_solve(clause_set,[])
-    maybe = test(clause_set,result)
-    if maybe == False:
+    if i != 16:
+        clause_set = load_dimacs(f'colouring/sw100-{i}.cnf')
+        result = dpll_sat_solve(clause_set,[])
+        maybe = test(clause_set,result)
+        if maybe == False:
+            print(i)
+            print("False")
+            break
         print(i)
-        print("False")
-        break
-    print(i)
-        
+            

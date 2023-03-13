@@ -336,7 +336,7 @@ def pure_literal_elimination(clause_set):
 def test(clause_set,L):
     for i in L:
         clause_set = set_var(clause_set,i)
-    # unit_propagate2(clause_set)
+    # unit_propagate(clause_set)
     print(clause_set)
     # assignments = []
     # for i in clause_set:
@@ -347,12 +347,12 @@ def test(clause_set,L):
     #     if -i[0] in assignments:
     #         return False
     # return True
-clause_set = load_dimacs("8queens.txt")
-L = [-28, -37, -29, -43, -18, -38, -12, -46, -27, -23, -49, -8, -35, -13, -55, -44, -2, -57, -24, -54, -39, -10, -59, -4, -33, -21, 30, -26, -61, -16, -6, -47, -51, -32, -63, -22, -41, -52, -1, 11, -48, -14, -36, 17, -53, -58, -3, -31, -20, -42, -9, -64, -25, -5, -15, -56, -62, -19, -34, 7, 40, 45, 50, 60]
+clause_set = load_dimacs("n100.txt")
+L = [83, 81, -48, -18, -68, -62, -39, -2, 63, 95, 73, 40, -96, -11, 76, 26, 37, 42, -15, -28, 13, -34, -69, -66, -23, -65, 70, 49, 60, 98, 46, -43, 87, 67, -85, 91, -30, 9, 16, 20, -29, 21, 38, -44, 24, -5, 58, 27, -45, -59, 6]
 # # print(clause_set)
 # print(test(clause_set,L))
-# print(dpll_wiki2(clause_set,[]))
-print(branching_sat_solve2(clause_set,[]))
+# print(branching_sat_solve(clause_set,[]))
+# print(branching_sat_solve2(clause_set,[]))
 # print(np.mean(timeit.repeat('branching_sat_solve2(clause_set,[])', globals = globals(), number =1, repeat = 1)))
 
     
