@@ -309,7 +309,7 @@ def test(clause_set,L):
         clause_set = set_var3(clause_set,i)
         if clause_set == True or clause_set == False:
             break
-    # unit_propagate(clause_set)
+    # unit_propagate3(clause_set)
     return clause_set
     # assignments = []
     # for i in clause_set:
@@ -350,8 +350,8 @@ def branch(clause_set,partial_assignment,all_variables):
         return False
     else:
         return partial_assignment
-clause_set = load_dimacs("n100.txt")
-L = [83,-52,81,-48,-18,-68,-62,-39,42,6,-2,63,-86,-36,-95,30,-85,-73,100,89,40,-55,-96,35,-93,76,-98,-64,34,-21,97,-59,-58,92,35,69,-16,-78,-8,9,-84,-65,77,3,7,56,-47,4,17,51,57,-60,91,72,-94,-79,-88,99]
+clause_set = load_dimacs("W_2,3_ n=8.txt")
+L = [1,2,16,11,12,5,-14,-7,-8,-3,-9,-4,-13,-10,6,15]
 print(test(clause_set,L))
 # print(branching_sat_solve(clause_set,[]))
 # print(np.mean(timeit.repeat('dpll_wiki2(clause_set,[])', globals = globals(), number =10, repeat = 1))/10)
