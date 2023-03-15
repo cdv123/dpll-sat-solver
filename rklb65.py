@@ -139,6 +139,11 @@ def unit_propagate(clause_set):
     return clause_set
                 
 # Q8 - dpll_sat_solve, implemented using watch literals, with the heuristic of last free variable being used
+# Papers / sources used for learning about watched literals and LEFV:
+# https://school.a4cp.org/summer2011/slides/Gent/SATCP3.pdf
+# https://dspace.mit.edu/bitstream/handle/1721.1/37691/129947026-MIT.pdf?sequence=2
+# https://www.researchgate.net/figure/The-2-watching-literal-method-The-watched-literals-are-are-x-6-and-x-8-Variable-x-6_fig3_220565739
+# https://baldur.iti.kit.edu/sat/files/2018/l05.pdf
 def dpll_sat_solve(clause_set,partial_assignment=[]):
     watch_literals = {}
     last_free_var = [0]
