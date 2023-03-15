@@ -290,6 +290,3 @@ def isSat(clause,partial_assignment):
         if partial_assignment[abs(i)] == i:
             return True
     return False
-
-clause_set = load_dimacs('W_2,3_ n=8.txt')
-print(branching_sat_solve(clause_set,[]))
