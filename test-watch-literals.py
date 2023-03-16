@@ -1,10 +1,6 @@
-from watched_literals import dpll_sat_solve
+from rklb65 import dpll_sat_solve
 from dpll import test
 import numpy as np
-import copy
-import itertools
-import collections
-import timeit
 def load_dimacs(file_name):
     example = open(file_name, "r")
     lines = example.readlines()
@@ -34,13 +30,12 @@ def load_dimacs(file_name):
 #     if i==1000:
 #         print("True")
 for i in range(1,101):
-    if i != 16:
-        clause_set = load_dimacs(f'colouring/sw100-{i}.cnf')
-        result = dpll_sat_solve(clause_set,[])
-        maybe = test(clause_set,result)
-        if maybe == False:
-            print(i)
-            print("False")
-            break
+    clause_set = load_dimacs(f'colouring/sw100-{i}.cnf')
+    result = dpll_sat_solve(clause_set,[])
+    maybe = test(clause_set,result)
+    if maybe == False:
         print(i)
+        print("False")
+        break
+    print(i)
             

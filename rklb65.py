@@ -157,6 +157,7 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     literals = list(np.abs(vars))
     partial_assignment = {}
     units = []
+    clause_set = (list(map(list,set(map(tuple,clause_set)))))
     #intialise partial assignments as a dictionary, 0 is unassigned, 1 is set to true, -1, is set to false
     partial_assignment = dict.fromkeys(literals,0)
     #initialise dictionary of watched literals, key = literal, value = clauses being watched
@@ -164,20 +165,17 @@ def dpll_sat_solve(clause_set,partial_assignment=[]):
     units = [i[0] for  i in clause_set if len(i) == 1]
     if units == []:
         for i in range(len(clause_set)):
-            if clause_set[i] not in watch_literals[clause_set[i][0]]:
-                watch_literals[clause_set[i][0]].append(clause_set[i])
-                watch_literals[clause_set[i][1]].append(clause_set[i])
+            watch_literals[clause_set[i][0]].append(clause_set[i])
+            watch_literals[clause_set[i][1]].append(clause_set[i])
     else:
         for i in range(len(clause_set)):
             # clause_set[i] = set(clause_set[i])
             if len(clause_set[i]) == 1:
                 units.append(clause_set[i][0])
             else:
-                if clause_set[i] not in watch_literals[clause_set[i][0]]:
-                    watch_literals[clause_set[i][0]].append(clause_set[i])
-                    watch_literals[clause_set[i][1]].append(clause_set[i])
+                watch_literals[clause_set[i][0]].append(clause_set[i])
+                watch_literals[clause_set[i][1]].append(clause_set[i])
     # try using dict comprehension
-    # watch_literals = {key: [clause_set[i][0],clause_set[i][1]] for key in vars}
     #wrapper function needed as only initialise watched literals once
     partial_assignment = dpll_sat_solve_wrapper(partial_assignment,units,watch_literals,vars2,last_free_var)
     #obtain list of assignments from dictionary of assignments
@@ -274,7 +272,7 @@ def set_var(partial_assignment,watch_literals,var,units,last_free_var):
                 #otherwise, swap with watch literals
                 else:
                     #make last seen variable the last free variable for the heuristic
-                    last_free_var[0] = unassigned_literals[-1]
+                    last_free_var[0] = unassigned_literals[0]
                     if partial_assignment[abs(watches_clause)] != watches_clause and partial_assignment[abs(watches_clause)] !=0:
                         watch_literals[unassigned_literals[0]].append(clause)
                         watch_literals[watches_clause].remove(clause)
