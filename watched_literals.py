@@ -171,6 +171,6 @@ def isSat(clause,partial_assignment):
             return True
     return False
 
-# clause_set = load_dimacs("LNP-6.txt")
-# print(dpll_sat_solve(clause_set,[]))
-# print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1))/1)
+clause_set = load_dimacs("n100.txt")
+print(dpll_sat_solve(clause_set,[]))
+print(np.mean(timeit.repeat('dpll_sat_solve(clause_set)', globals = globals(), number = 1, repeat = 1))/1)

@@ -54,8 +54,8 @@ def next_var(clause_set):
     return collections.Counter(clause_set2).most_common(1)[0][0]
 
 # Q6 - branching_sat_solve, checks if clause is sat or unsat, if not yet sat or unsat, branches on variable
+# Q6 - branching_sat_solve, checks if clause is sat or unsat, if not yet sat or unsat, branches on variable
 def branching_sat_solve(clause_set,partial_assignment):
-    clause_set = unit_propagate(clause_set)
     #since each time a clause is sat, it is removed, an empty list means the clause is sat
     if clause_set ==[]:
         return partial_assignment
@@ -293,3 +293,5 @@ def isSat(clause,partial_assignment):
         if partial_assignment[abs(i)] == i:
             return True
     return False
+queens = load_dimacs("8queens.txt")
+print(branching_sat_solve(queens,[]))
